@@ -1,0 +1,171 @@
+/*
+ * Design contract. This is the only stylesheet allowed to contain a colour
+ * literal, a shadow or a gradient. Values come from design/reference/spec.md.
+ * Components bind to these tokens through Tailwind utilities (bg-canvas,
+ * text-ink-2, shadow-monograph) or through var(--token).
+ */
+
+@theme {
+  /* Switch the default Tailwind palette off: only contract colours compile. */
+  --color-*: initial;
+
+  /* Core surface and ink */
+  --color-canvas: #FAF9F6;   /* Warm Archival Paper */
+  --color-surface: #FFFFFF;  /* Crisp Print White */
+  --color-well: #F3F1EC;     /* Subtle Panel / Code Well */
+  --color-hairline: #E4E2DD; /* Hairline Border */
+  --color-hairline-strong: #C5C0B8; /* Hairline on hover */
+  --color-dot: #DCD8D0;      /* Background dot matrix */
+  --color-ink: #141517;      /* Primary Ink */
+  --color-ink-2: #525866;    /* Secondary Ink */
+  --color-ink-3: #8A909E;    /* Muted Ink: axis labels and line numbers only */
+  --color-white: #FFFFFF;    /* Type and hairlines on dark covers */
+
+  /* VOL. I, Solar String Monitoring Alarm System */
+  --color-vol1-cover: #0F2922;  /* Deep Telemetry Forest */
+  --color-vol1-accent: #F59E0B; /* Solar Amber */
+  --color-vol1-tint: #163B31;   /* Diagram Grid Tint */
+  --color-vol1-accent-on-cover: #F59E0B;
+  --color-vol1-accent-on-paper: #926210;
+
+  /* VOL. II, OrderDi */
+  --color-vol2-cover: #18181B;  /* Obsidian Kitchen */
+  --color-vol2-accent: #EF4444; /* Order Vermilion */
+  --color-vol2-tint: #27272A;   /* Surface Tint */
+  --color-vol2-accent-on-cover: #F15E5E;
+  --color-vol2-accent-on-paper: #C33B3B;
+
+  /* VOL. III, Salon Booking Microservices Platform */
+  --color-vol3-cover: #0F172A;  /* Midnight Cloud */
+  --color-vol3-accent: #3B82F6; /* Gateway Cobalt */
+  --color-vol3-tint: #1E293B;   /* Diagram Grid Tint */
+  --color-vol3-accent-on-cover: #5190F7;
+  --color-vol3-accent-on-paper: #326AC5;
+
+  /* VOL. IV, RealWorld_XP */
+  --color-vol4-cover: #1E1B4B;  /* Deep Indigo */
+  --color-vol4-accent: #8B5CF6; /* Neural Violet */
+  --color-vol4-tint: #2E2A6E;   /* Surface Tint */
+  --color-vol4-accent-on-cover: #AB8AF9;
+  --color-vol4-accent-on-paper: #7A52D7;
+
+  /* State colours for the diagrams and previews, tuned for dark covers */
+  --color-status-ok: #4ADE80;
+  --color-status-warn: #FBBF24;
+  --color-status-alarm: #F87171;
+
+  /* Technology marks in the core stack. Brand colours, used for icons only. */
+  --color-brand-python: #3776AB;
+  --color-brand-fastapi: #009688;
+  --color-brand-java: #E76F00;       /* steam */
+  --color-brand-java-cup: #5382A1;   /* cup */
+  --color-brand-spring: #6DB33F;
+  --color-brand-rabbitmq: #FF6600;
+  --color-brand-typescript: #3178C6;
+  --color-brand-react: #087EA4;
+  --color-brand-angular: #DD0031;
+  --color-brand-tailwind: #06B6D4;
+  --color-brand-postgresql: #336791;
+  --color-brand-timescale: #FDB515;
+  --color-brand-mysql: #4479A1;
+  --color-brand-redis: #FF4438;
+  --color-brand-docker: #2496ED;
+  --color-brand-aws: #FF9900;        /* smile */
+  --color-brand-aws-ink: #232F3E;    /* wordmark */
+  --color-brand-git: #F03C2E;
+
+  /* Typography */
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --text-h1: clamp(2.25rem, 4.5vw, 3.75rem);
+  --text-h1--line-height: 1.08;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h2: clamp(1.75rem, 3vw, 2.5rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h3: clamp(1.35rem, 2.2vw, 1.85rem);
+  --text-h3--line-height: 1.2;
+  --text-lede: 1.125rem;
+  --text-lede--line-height: 1.6;
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.55;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.08em;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.35;
+
+  /* Reading measure */
+  --container-measure: 65ch;
+
+  /* Elevation */
+  --shadow-monograph: 0 24px 48px -12px rgba(20, 21, 23, 0.22), 0 4px 12px -2px rgba(20, 21, 23, 0.08);
+  --shadow-frame: 0 1px 0 rgba(20, 21, 23, 0.04), 0 12px 32px -16px rgba(20, 21, 23, 0.18);
+  --shadow-portrait: 0 12px 32px -12px rgba(20, 21, 23, 0.12);
+  --shadow-badge: 0 1px 2px rgba(20, 21, 23, 0.04);
+
+  /* One easing curve for the whole site */
+  --ease-monograph: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  /* Named z ladder. No numeric z-index anywhere else. */
+  --z-rail: 20;
+  --z-nav: 40;
+  --z-skip: 60;
+
+  /* Book spine crease, exactly as specified */
+  --gradient-spine-crease: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(255, 255, 255, 0.18) 35%,
+    rgba(0, 0, 0, 0.22) 65%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+
+  /* Pointer following specular sheen colour */
+  --sheen-highlight: rgba(255, 255, 255, 0.14);
+
+  /* Hero dot matrix: the printed base grid and the raised relief dots */
+  --gradient-dot-grid: radial-gradient(var(--color-dot) 1.15px, transparent 1.15px);
+  --gradient-dot-raised: radial-gradient(var(--color-ink) 2px, transparent 2px);
+
+  /* Embossed relief under the pointer: warm highlight, faint shade, mask midpoint */
+  --emboss-highlight: rgba(255, 255, 255, 0.85);
+  --emboss-shade: rgba(20, 21, 23, 0.03);
+  --emboss-mask-mid: rgba(0, 0, 0, 0.45);
+
+  /* Fore-edge of the book: a stack of pages seen from the side */
+  --gradient-page-block: repeating-linear-gradient(
+    180deg,
+    rgba(250, 249, 246, 0.96) 0px,
+    rgba(250, 249, 246, 0.96) 1px,
+    rgba(196, 192, 182, 0.96) 1px,
+    rgba(196, 192, 182, 0.96) 2px
+  );
+
+  /* Soft vignette that seats the viewport into the cover */
+  --gradient-cover-vignette: radial-gradient(
+    120% 90% at 30% 0%,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0) 55%
+  );
+
+  /* Lines and fills on dark covers */
+  --cover-line: rgba(255, 255, 255, 0.15);
+  --cover-line-strong: rgba(255, 255, 255, 0.28);
+  --cover-fill: rgba(255, 255, 255, 0.06);
+  --cover-fill-strong: rgba(255, 255, 255, 0.12);
+  --cover-ink: #FFFFFF;
+  --cover-ink-2: rgba(255, 255, 255, 0.76);
+
+  /* Lightbox backdrop */
+  --scrim: rgba(20, 21, 23, 0.78);
+
+  /* Paper grain: fractal noise, tiled */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

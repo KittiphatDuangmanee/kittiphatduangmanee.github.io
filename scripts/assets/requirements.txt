@@ -1,0 +1,6 @@
+# Asset pipeline only. Install into the project local .venv, never globally:
+#   python -m venv .venv
+#   .venv/Scripts/python -m pip install -r scripts/assets/requirements.txt
+pillow==13.0.0
+rembg[cpu]==2.0.87
+pymupdf==1.28.2

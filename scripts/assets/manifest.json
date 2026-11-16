@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "source": "design/assets/profile/IMG_5228.jpg",
+    "output": "public/images/profile-avatar.webp",
+    "width": 560,
+    "aspect": [4, 5],
+    "quality": 84,
+    "model": "birefnet-general-lite",
+    "framing": {
+      "widthInHeadWidths": 2.48,
+      "headroom": 0.1,
+      "shiftXInHeadWidths": 0.1
+    }
+  },
+  "render": {
+    "supersampleWidth": 3600,
+    "fullWidth": 1800,
+    "thumbWidth": 900,
+    "quality": 86
+  },
+  "certificates": [
+    {
+      "slug": "aws-cloud-practitioner-essentials",
+      "source": "design/assets/certificates/AWS_Cloud_Practioner_Certificate.pdf",
+      "pages": [0]
+    },
+    {
+      "slug": "depa-security-engineer",
+      "source": "design/assets/certificates/Depa_certificate.pdf",
+      "pages": [0]
+    },
+    {
+      "slug": "arit-security-engineer",
+      "source": "design/assets/certificates/arit_certificate.pdf",
+      "pages": [0]
+    },
+    {
+      "slug": "its-cybersecurity",
+      "source": "design/assets/certificates/Cybersecurity_certificate.pdf",
+      "pages": [0]
+    }
+  ],
+  "outputs": {
+    "previews": "public/images/certificates",
+    "documents": "public/certificates"
+  }
+}

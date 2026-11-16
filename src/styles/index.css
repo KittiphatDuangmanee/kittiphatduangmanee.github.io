@@ -1,0 +1,269 @@
+@import "tailwindcss" source(none);
+@import "./tokens.css";
+
+/* Only application code is scanned for class names. */
+@source "../";
+@source "../../index.html";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  html[data-motion='reduce'] {
+    scroll-behavior: auto;
+  }
+
+  html[data-scroll-lock] {
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  h3 {
+    font-size: var(--text-h3);
+    line-height: 1.2;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Anchors land below the sticky navigation bar. */
+  [id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* On dark covers the ring switches to the cover ink. */
+  [data-cover] :focus-visible {
+    outline-color: var(--cover-ink);
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+  }
+
+  dialog {
+    max-width: none;
+    max-height: none;
+  }
+
+  dialog::backdrop {
+    background-color: var(--scrim);
+  }
+}
+
+/*
+ * Every monograph cover sets --vol-cover, --vol-accent, --vol-tint and
+ * --vol-accent-ink from its theme. Everything drawn on a cover derives from
+ * those four, so one component styles all four volumes.
+ */
+[data-cover] {
+  --vol-viewport: color-mix(in oklab, var(--vol-cover) 78%, black);
+  --vol-accent-wash: color-mix(in oklab, var(--vol-accent) 22%, transparent);
+  --vol-accent-soft: color-mix(in oklab, var(--vol-accent) 55%, transparent);
+}
+
+@layer components {
+  /* Architecture diagram parts. State comes from data attributes. */
+  .dg-box {
+    fill: var(--cover-fill);
+    stroke: var(--cover-line);
+    stroke-width: 1;
+    transition:
+      fill 0.25s var(--ease-monograph),
+      stroke 0.25s var(--ease-monograph);
+  }
+
+  .dg-node {
+    cursor: pointer;
+    outline: none;
+    transition: opacity 0.25s var(--ease-monograph);
+  }
+
+  .dg-node[data-state='linked'] .dg-box {
+    fill: var(--cover-fill-strong);
+    stroke: var(--cover-line-strong);
+  }
+
+  .dg-node[data-state='focus'] .dg-box {
+    fill: var(--vol-accent-wash);
+    stroke: var(--vol-accent);
+    stroke-width: 1.5;
+  }
+
+  .dg-node[data-state='idle'] {
+    opacity: 0.56;
+  }
+
+  .dg-focus-ring {
+    fill: none;
+    stroke: var(--cover-ink);
+    stroke-width: 2;
+    opacity: 0;
+  }
+
+  .dg-node:focus-visible .dg-focus-ring {
+    opacity: 1;
+  }
+
+  .dg-label {
+    fill: var(--cover-ink);
+    font-family: var(--font-sans);
+    font-weight: 600;
+  }
+
+  .dg-tech {
+    fill: var(--cover-ink-2);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .dg-edge {
+    fill: none;
+    stroke: var(--cover-line-strong);
+    stroke-width: 1.25;
+    transition: opacity 0.25s var(--ease-monograph);
+  }
+
+  .dg-edge[data-active='true'] {
+    stroke: var(--vol-accent);
+    stroke-width: 1.75;
+  }
+
+  .dg-edge[data-dim='true'] {
+    opacity: 0.35;
+  }
+
+  .dg-arrow {
+    fill: var(--cover-line-strong);
+  }
+
+  .dg-arrow-active {
+    fill: var(--vol-accent);
+  }
+
+  .dg-group {
+    fill: var(--cover-fill);
+    stroke: var(--cover-line);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    transition: stroke 0.25s var(--ease-monograph);
+  }
+
+  .dg-group[data-active='true'] {
+    stroke: var(--vol-accent-soft);
+  }
+
+  .dg-group-label {
+    fill: var(--cover-ink-2);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke: var(--vol-viewport);
+    stroke-width: 7px;
+    stroke-linejoin: round;
+  }
+}
+
+/* Technical metadata tag: JetBrains Mono, 12px, uppercase, 0.08em. */
+@utility meta-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Architectural dot matrix printed on the canvas, one dot per 24px cell. */
+@utility dot-grid {
+  background-image: var(--gradient-dot-grid);
+  background-size: 24px 24px;
+}
+
+/* The same matrix with larger ink dots: the relief that rises under the pointer. */
+@utility dot-grid-raised {
+  background-image: var(--gradient-dot-raised);
+  background-size: 24px 24px;
+}
+
+/* Faint architectural coordinate grid printed on a monograph cover. */
+@utility cover-grid {
+  background-image:
+    linear-gradient(to right, var(--vol-tint) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--vol-tint) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Paper grain texture, used at very low opacity. */
+@utility paper-grain {
+  background-image: var(--grain);
+  background-size: 220px 220px;
+}
+
+/* Hide a scrollbar while keeping the element scrollable. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local tooling
+.venv/
+.claude/
+.design-audit/
+shots/
+*.local
+.DS_Store
+Thumbs.db
+
+# Raw source assets stay on the author's machine. They include a resume with
+# phone numbers, exam score reports, raw photos with camera serials in EXIF,
+# and an internal diagram. The site builds from the processed files in public/.
+design/assets/
+
+# Strings the asset pipeline must never publish (emails, registration ids).
+scripts/assets/denylist.local.txt
