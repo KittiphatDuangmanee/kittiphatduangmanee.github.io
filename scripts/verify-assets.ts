@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 
 import { certificates } from '../src/data/certificates.ts'
 import { profile } from '../src/data/profile.ts'
+import { projects } from '../src/data/projects.ts'
 
 interface Reference {
   path: string
@@ -31,6 +32,13 @@ for (const certificate of certificates) {
   references.push({ path: thumb.src, owner: `${certificate.id}.thumb`, width: thumb.width, height: thumb.height })
   references.push({ path: full.src, owner: `${certificate.id}.full`, width: full.width, height: full.height })
   references.push({ path: certificate.document.href, owner: `${certificate.id}.document` })
+}
+for (const project of projects) {
+  for (const screen of project.screens) {
+    const { card, full } = screen
+    references.push({ path: card.src, owner: `${screen.id}.card`, width: card.width, height: card.height })
+    references.push({ path: full.src, owner: `${screen.id}.full`, width: full.width, height: full.height })
+  }
 }
 
 const problems: string[] = []
@@ -93,7 +101,8 @@ for (const reference of references) {
 
 // Files that sit in the published folders but that nothing references.
 const referenced = new Set(references.map((reference) => reference.path))
-for (const folder of ['images', 'images/certificates', 'certificates']) {
+const projectFolders = projects.map((project) => `images/projects/${project.id}`)
+for (const folder of ['images', 'images/certificates', 'certificates', 'images/projects', ...projectFolders]) {
   const directory = join(target, folder)
   if (!existsSync(directory)) continue
   for (const name of readdirSync(directory)) {

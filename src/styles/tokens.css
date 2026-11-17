@@ -2,7 +2,7 @@
  * Design contract. This is the only stylesheet allowed to contain a colour
  * literal, a shadow or a gradient. Values come from design/reference/spec.md.
  * Components bind to these tokens through Tailwind utilities (bg-canvas,
- * text-ink-2, shadow-monograph) or through var(--token).
+ * text-ink-2, shadow-window) or through var(--token).
  */
 
 @theme {
@@ -19,40 +19,7 @@
   --color-ink: #141517;      /* Primary Ink */
   --color-ink-2: #525866;    /* Secondary Ink */
   --color-ink-3: #8A909E;    /* Muted Ink: axis labels and line numbers only */
-  --color-white: #FFFFFF;    /* Type and hairlines on dark covers */
-
-  /* VOL. I, Solar String Monitoring Alarm System */
-  --color-vol1-cover: #0F2922;  /* Deep Telemetry Forest */
-  --color-vol1-accent: #F59E0B; /* Solar Amber */
-  --color-vol1-tint: #163B31;   /* Diagram Grid Tint */
-  --color-vol1-accent-on-cover: #F59E0B;
-  --color-vol1-accent-on-paper: #926210;
-
-  /* VOL. II, OrderDi */
-  --color-vol2-cover: #18181B;  /* Obsidian Kitchen */
-  --color-vol2-accent: #EF4444; /* Order Vermilion */
-  --color-vol2-tint: #27272A;   /* Surface Tint */
-  --color-vol2-accent-on-cover: #F15E5E;
-  --color-vol2-accent-on-paper: #C33B3B;
-
-  /* VOL. III, Salon Booking Microservices Platform */
-  --color-vol3-cover: #0F172A;  /* Midnight Cloud */
-  --color-vol3-accent: #3B82F6; /* Gateway Cobalt */
-  --color-vol3-tint: #1E293B;   /* Diagram Grid Tint */
-  --color-vol3-accent-on-cover: #5190F7;
-  --color-vol3-accent-on-paper: #326AC5;
-
-  /* VOL. IV, RealWorld_XP */
-  --color-vol4-cover: #1E1B4B;  /* Deep Indigo */
-  --color-vol4-accent: #8B5CF6; /* Neural Violet */
-  --color-vol4-tint: #2E2A6E;   /* Surface Tint */
-  --color-vol4-accent-on-cover: #AB8AF9;
-  --color-vol4-accent-on-paper: #7A52D7;
-
-  /* State colours for the diagrams and previews, tuned for dark covers */
-  --color-status-ok: #4ADE80;
-  --color-status-warn: #FBBF24;
-  --color-status-alarm: #F87171;
+  --color-white: #FFFFFF;    /* Certificate paper */
 
   /* Technology marks in the core stack. Brand colours, used for icons only. */
   --color-brand-python: #3776AB;
@@ -73,6 +40,26 @@
   --color-brand-aws: #FF9900;        /* smile */
   --color-brand-aws-ink: #232F3E;    /* wordmark */
   --color-brand-git: #F03C2E;
+
+  /* Marks for tools used in a single project. Never part of the core stack. */
+  --color-brand-hono: #E36002;
+  --color-brand-cockroachdb: #6933FF;
+  --color-brand-cloudflare: #F38020;
+  --color-brand-line: #06C755;
+
+  /* Architecture diagram: a light engineering canvas in cool slate. */
+  --color-diagram-canvas: #F8FAFC;
+  --color-diagram-grid: #E2E8F0;
+  --color-diagram-border: #CBD5E1;
+  --color-diagram-edge: #94A3B8;        /* idle connector */
+  --color-diagram-active: #2563EB;      /* selected node, live connector */
+  --color-diagram-solar: #F59E0B;       /* plant data source */
+  --color-diagram-panel: #0369A1;       /* solar panel cells */
+  --color-diagram-scheduler: #6366F1;
+  --color-diagram-engine: #7C3AED;
+  --color-diagram-alert: #E11D48;
+  --color-diagram-browser: #475569;
+  --color-diagram-chart: #059669;
 
   /* Typography */
   --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
@@ -103,32 +90,24 @@
   --container-measure: 65ch;
 
   /* Elevation */
-  --shadow-monograph: 0 24px 48px -12px rgba(20, 21, 23, 0.22), 0 4px 12px -2px rgba(20, 21, 23, 0.08);
-  --shadow-frame: 0 1px 0 rgba(20, 21, 23, 0.04), 0 12px 32px -16px rgba(20, 21, 23, 0.18);
+  --shadow-modal: 0 24px 48px -12px rgba(20, 21, 23, 0.22), 0 4px 12px -2px rgba(20, 21, 23, 0.08);
+  --shadow-window: 0 12px 36px -12px rgba(20, 21, 23, 0.12);
   --shadow-portrait: 0 12px 32px -12px rgba(20, 21, 23, 0.12);
   --shadow-badge: 0 1px 2px rgba(20, 21, 23, 0.04);
+  --shadow-node: 0 1px 2px rgba(15, 23, 42, 0.06), 0 3px 8px -3px rgba(15, 23, 42, 0.1);
+  --shadow-node-active: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 20px -10px rgba(37, 99, 235, 0.55);
 
   /* One easing curve for the whole site */
-  --ease-monograph: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
   /* Named z ladder. No numeric z-index anywhere else. */
+  --z-raised: 1;
+  --z-overlay: 2;
   --z-rail: 20;
   --z-nav: 40;
   --z-skip: 60;
-
-  /* Book spine crease, exactly as specified */
-  --gradient-spine-crease: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.28) 0%,
-    rgba(255, 255, 255, 0.18) 35%,
-    rgba(0, 0, 0, 0.22) 65%,
-    rgba(255, 255, 255, 0.08) 100%
-  );
-
-  /* Pointer following specular sheen colour */
-  --sheen-highlight: rgba(255, 255, 255, 0.14);
 
   /* Hero dot matrix: the printed base grid and the raised relief dots */
   --gradient-dot-grid: radial-gradient(var(--color-dot) 1.15px, transparent 1.15px);
@@ -139,33 +118,15 @@
   --emboss-shade: rgba(20, 21, 23, 0.03);
   --emboss-mask-mid: rgba(0, 0, 0, 0.45);
 
-  /* Fore-edge of the book: a stack of pages seen from the side */
-  --gradient-page-block: repeating-linear-gradient(
-    180deg,
-    rgba(250, 249, 246, 0.96) 0px,
-    rgba(250, 249, 246, 0.96) 1px,
-    rgba(196, 192, 182, 0.96) 1px,
-    rgba(196, 192, 182, 0.96) 2px
-  );
+  /* Diagram canvas: 16px minor lines under 80px major lines */
+  --diagram-grid-minor: rgba(226, 232, 240, 0.5);
+  --gradient-diagram-grid:
+    linear-gradient(to right, var(--color-diagram-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-diagram-grid) 1px, transparent 1px),
+    linear-gradient(to right, var(--diagram-grid-minor) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--diagram-grid-minor) 1px, transparent 1px);
 
-  /* Soft vignette that seats the viewport into the cover */
-  --gradient-cover-vignette: radial-gradient(
-    120% 90% at 30% 0%,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0) 55%
-  );
-
-  /* Lines and fills on dark covers */
-  --cover-line: rgba(255, 255, 255, 0.15);
-  --cover-line-strong: rgba(255, 255, 255, 0.28);
-  --cover-fill: rgba(255, 255, 255, 0.06);
-  --cover-fill-strong: rgba(255, 255, 255, 0.12);
-  --cover-ink: #FFFFFF;
-  --cover-ink-2: rgba(255, 255, 255, 0.76);
-
-  /* Lightbox backdrop */
+  /* Dialog backdrops: the certificate lightbox, and the lighter blurred one */
   --scrim: rgba(20, 21, 23, 0.78);
-
-  /* Paper grain: fractal noise, tiled */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --scrim-soft: rgba(20, 21, 23, 0.46);
 }

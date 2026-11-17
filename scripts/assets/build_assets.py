@@ -6,6 +6,7 @@ sanitised files the site ships from public/.
     python scripts/assets/build_assets.py all            # everything
     python scripts/assets/build_assets.py profile        # avatar only
     python scripts/assets/build_assets.py certificates   # previews + PDFs
+    python scripts/assets/build_assets.py projects       # project screens
     python scripts/assets/build_assets.py check          # verify outputs
 
 Profile photo: EXIF auto-orientation FIRST, then local background removal,
@@ -14,6 +15,11 @@ then a 4:5 head and torso crop, then 560 px wide WebP with alpha and no EXIF.
 Certificates: page 1 of each PDF rendered at high resolution into a lightbox
 WebP and a carousel WebP, and a sanitised single page PDF (rebuilt as a new
 document, metadata and XMP removed) so nothing private rides along.
+
+Project screens: real captures and exported design frames, never drawn
+mockups. Each source becomes screen-N.webp (the whole frame, for the zoom
+view) and screen-N-card.webp (cropped from the top to the carousel ratio),
+with no metadata.
 """
 
 from __future__ import annotations
@@ -251,6 +257,81 @@ def build_certificates() -> None:
         document.close()
 
 
+# --------------------------------------------------------------- projects ---
+
+
+def card_size(group: dict, source_width: int) -> tuple[int, int]:
+    """Pixel size of a carousel card: the set's ratio, never wider than the source."""
+    card = MANIFEST["projects"]["card"]
+    aspect_w, aspect_h = group.get("aspect", card["aspect"])
+    width = min(source_width, card["width"])
+    return width, round(width * aspect_h / aspect_w)
+
+
+def apply_masks(image: Image.Image, masks: list[dict], name: str) -> Image.Image:
+    """Cover boxes of a screen (a logo, say) with a flat colour sampled from the screen itself.
+
+    Coordinates are source pixels. The sample point must sit on a flat area, so
+    its 5x5 neighbourhood is checked first: a fill taken from an edge or a
+    gradient would leave a visible patch.
+    """
+    from PIL import ImageDraw
+
+    pixels = np.asarray(image)
+    draw = ImageDraw.Draw(image)
+    for mask in masks:
+        sample_x, sample_y = mask["fillFrom"]
+        patch = pixels[sample_y - 2 : sample_y + 3, sample_x - 2 : sample_x + 3].reshape(-1, 3).astype(int)
+        if np.ptp(patch, axis=0).max() > 2:
+            fail(f"{name}: mask sample at {mask['fillFrom']} is not a flat colour")
+        colour = tuple(int(channel) for channel in patch[0])
+        x0, y0, x1, y1 = mask["box"]
+        draw.rectangle((x0, y0, x1 - 1, y1 - 1), fill=colour)
+        log(f"project  {name}: masked {mask['box']} with rgb{colour}")
+    return image
+
+
+def build_projects() -> None:
+    spec = MANIFEST["projects"]
+    for group in spec["sets"]:
+        out_dir = ROOT / spec["output"] / group["id"]
+        out_dir.mkdir(parents=True, exist_ok=True)
+        # Start clean, so a source dropped from the manifest leaves no orphan behind.
+        for stale in out_dir.glob("screen-*.webp"):
+            stale.unlink()
+
+        for number, relative in enumerate(group["sources"], start=1):
+            source = ROOT / relative
+            if not source.exists():
+                fail(f"project screen missing: {source}")
+            # A fresh RGB copy carries no EXIF, ICC profile or text chunks.
+            image = Image.open(source).convert("RGB")
+            if group.get("masks"):
+                image = apply_masks(image, group["masks"], source.name)
+
+            full_width = min(image.width, spec["full"]["maxWidth"])
+            full_height = round(image.height * full_width / image.width)
+            full = image if full_width == image.width else image.resize(
+                (full_width, full_height), Image.Resampling.LANCZOS
+            )
+            full_path = out_dir / f"screen-{number}.webp"
+            full.save(full_path, "WEBP", quality=spec["full"]["quality"], method=6)
+
+            width, height = card_size(group, image.width)
+            scaled_height = round(image.height * width / image.width)
+            if scaled_height < height:
+                fail(f"{source.name} is too short for a {width}x{height} card; set an aspect for {group['id']}")
+            card = image.resize((width, scaled_height), Image.Resampling.LANCZOS).crop((0, 0, width, height))
+            card_path = out_dir / f"screen-{number}-card.webp"
+            card.save(card_path, "WEBP", quality=spec["card"]["quality"], method=6)
+
+            log(
+                f"project  {group['id']} {source.name}: "
+                f"{full_path.name} {full_width}x{full_height} {full_path.stat().st_size} bytes, "
+                f"{card_path.name} {width}x{height} {card_path.stat().st_size} bytes"
+            )
+
+
 # ------------------------------------------------------------------ check ---
 
 
@@ -310,11 +391,31 @@ def check_outputs() -> None:
                 problems.append(f"{pdf_path.name} contains a denylisted string")
         document.close()
 
+    projects = MANIFEST["projects"]
+    screens = 0
+    for group in projects["sets"]:
+        out_dir = ROOT / projects["output"] / group["id"]
+        for number in range(1, len(group["sources"]) + 1):
+            screens += 1
+            full_path = out_dir / f"screen-{number}.webp"
+            card_path = out_dir / f"screen-{number}-card.webp"
+            if not (must_exist(full_path) and must_exist(card_path)):
+                continue
+            full = Image.open(full_path)
+            card = Image.open(card_path)
+            if full.width > projects["full"]["maxWidth"]:
+                problems.append(f"{group['id']}/{full_path.name} is wider than {projects['full']['maxWidth']}px")
+            if card.size != card_size(group, full.width):
+                problems.append(f"{group['id']}/{card_path.name} is {card.size}, expected {card_size(group, full.width)}")
+            for image, path in ((full, full_path), (card, card_path)):
+                if image.getexif():
+                    problems.append(f"{group['id']}/{path.name} still carries EXIF")
+
     if problems:
         for problem in problems:
             print(f"FAIL  {problem}", file=sys.stderr)
         raise SystemExit(1)
-    total = 1 + 3 * len(MANIFEST["certificates"])
+    total = 1 + 3 * len(MANIFEST["certificates"]) + 2 * screens
     log(f"check    ok: {total} outputs present, sized, sanitised"
         f" ({len(banned)} denylist entries applied)")
 
@@ -324,7 +425,7 @@ def check_outputs() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("target", choices=("all", "profile", "certificates", "check"))
+    parser.add_argument("target", choices=("all", "profile", "certificates", "projects", "check"))
     parser.add_argument("--model", help="override the background removal model")
     parser.add_argument("--qa", type=Path, help="directory for a profile QA sheet")
     arguments = parser.parse_args()
@@ -333,6 +434,8 @@ def main() -> None:
         build_profile(arguments.model, arguments.qa)
     if arguments.target in ("all", "certificates"):
         build_certificates()
+    if arguments.target in ("all", "projects"):
+        build_projects()
     check_outputs()
 
 

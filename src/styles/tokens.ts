@@ -2,32 +2,29 @@
 // design/reference/spec.md, and components import it. No component retypes a
 // spec value, so the spec and the code cannot drift apart silently.
 
-/** Pointer tilt: spring smoothing and the clamp, in degrees. */
+type Bezier = [number, number, number, number]
+
+/** The site's one easing curve: a strong ease-out. */
+export const ease: Bezier = [0.22, 1, 0.36, 1]
+
+/** Sheet curve for the detail modal on phones: quick start, long settle. */
+export const easeDrawer: Bezier = [0.32, 0.72, 0, 1]
+
+/** Short, shared timings for small state changes (seconds). */
+export const duration = {
+  quick: 0.2,
+  state: 0.35,
+} as const
+
+/** Pointer tilt on the centre certificate: spring smoothing and the clamp, in degrees. */
 export const tilt = {
   spring: { stiffness: 260, damping: 24, mass: 0.6 },
-  maxMonograph: 7,
   maxCertificate: 6,
 } as const
 
 /** Perspective distances in pixels. */
 export const perspective = {
-  monograph: 1200,
   coverflow: 1400,
-} as const
-
-/** Z axis depth of the three monograph layers, in pixels. */
-export const depth = {
-  pageBlock: -6,
-  cover: 0,
-  viewport: 24,
-  chrome: 36,
-  sheen: 37,
-} as const
-
-/** Pointer following specular sheen: radius in px and falloff stop in percent. */
-export const sheen = {
-  radius: 420,
-  falloff: 70,
 } as const
 
 /**
@@ -41,28 +38,74 @@ export const emboss = {
   maskRadius: 220,
 } as const
 
-/** Core stack badge: hover lift in px and its spring. */
+/** Technology badge: hover lift in px and its spring. */
 export const badgeHover = {
   lift: -2,
   spring: { type: 'spring', stiffness: 400, damping: 25 },
 } as const
 
-/** Monograph entrance, driven by whileInView. */
-export const entrance = {
-  initial: { opacity: 0, y: 36, rotateX: 8 },
-  visible: { opacity: 1, y: 0, rotateX: 0 },
+/** A project card rising into view, once. */
+export const reveal = {
+  initial: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.2 },
-  transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  transition: { duration: 0.5, ease },
 } as const
 
-/** Scroll parallax of the inner viewport layer, in pixels. */
-export const parallax = {
-  from: -12,
-  to: 12,
+/**
+ * Project screenshot carousel. A slide travels `slideOffset` px on a spring
+ * with no overshoot while it cross-fades; a drag past `dragThreshold` px or a
+ * flick faster than `flickVelocity` px/s changes the slide.
+ */
+export const carousel = {
+  intervalSeconds: 4.5,
+  slideOffset: 28,
+  slideSpring: { type: 'spring', stiffness: 320, damping: 36, mass: 0.9 },
+  fade: { duration: 0.22, ease },
+  dragThreshold: 50,
+  flickVelocity: 400,
+  dragElastic: 0.18,
+  /** Longest frame gap counted toward the timer, so a background tab never skips slides. */
+  maxFrameMs: 100,
 } as const
 
-/** Band of the viewport that decides which volume is active in the index. */
-export const activeSectionRootMargin = '-35% 0px -45% 0px'
+/**
+ * Dialogs opened from the projects section. Entrances use a spring or the
+ * sheet curve; exits are shorter than entrances so the page answers at once.
+ */
+export const modal = {
+  scaleFrom: 0.97,
+  offsetY: 12,
+  enter: { type: 'spring', duration: 0.45, bounce: 0 },
+  exit: { duration: 0.18, ease },
+  sheetEnter: { duration: 0.45, ease: easeDrawer },
+  sheetExit: { duration: 0.25, ease: easeDrawer },
+  scrimEnter: { duration: 0.25, ease },
+  scrimExit: { duration: 0.18, ease },
+} as const
+
+/** Architecture diagram: travel time of a flow dot, and layout sizes in px. */
+export const diagram = {
+  dotSeconds: 1.8,
+  /** Below this stage width the grid is transposed so it reads top to bottom. */
+  wideFrom: 920,
+  rowHeight: 136,
+  nodeWidth: 132,
+  nodeHeight: 96,
+  /** Smallest side margin between a node and its grid cell. */
+  cellGap: 10,
+  /** Narrowest node that still shows its technology line. */
+  techLineFrom: 112,
+  cornerRadius: 8,
+  /** Gap between an arrow tip and the node it points at. */
+  arrowGap: 3,
+  /** Estimated advance of one label character, and the chip's padding and height. */
+  labelCharWidth: 6.05,
+  labelPadding: 14,
+  labelHeight: 18,
+  /** Spare length a connector segment needs beyond its label chip. */
+  labelMargin: 8,
+} as const
 
 export interface CoverflowPose {
   x: string
@@ -92,11 +135,3 @@ export function coverflowPose(offset: number): CoverflowPose {
   if (offset === 1) return coverflow.poses.right
   return offset < 0 ? coverflow.poses.parkedLeft : coverflow.poses.parkedRight
 }
-
-/** Short, shared timings for small state changes (seconds). */
-export const duration = {
-  quick: 0.2,
-  state: 0.35,
-} as const
-
-export const ease = [0.22, 1, 0.36, 1] as [number, number, number, number]

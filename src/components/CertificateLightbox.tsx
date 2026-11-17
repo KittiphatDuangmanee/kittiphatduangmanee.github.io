@@ -60,7 +60,7 @@ export function CertificateLightbox({ certificate, onClose }: CertificateLightbo
           initial={{ opacity: 0, y: 14, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: duration.state, ease }}
-          className="flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-xl border border-hairline bg-surface shadow-monograph"
+          className="flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden rounded-xl border border-hairline bg-surface shadow-modal"
         >
           <header className="flex items-start justify-between gap-4 border-b border-hairline px-5 py-4 sm:px-6">
             <div className="min-w-0">
@@ -73,7 +73,7 @@ export function CertificateLightbox({ certificate, onClose }: CertificateLightbo
               type="button"
               onClick={onClose}
               aria-label={copy.lightbox.close}
-              className="grid size-11 shrink-0 place-items-center rounded-full border border-hairline text-ink transition-colors duration-200 ease-monograph hover:bg-well"
+              className="grid size-11 shrink-0 place-items-center rounded-full border border-hairline text-ink transition-colors duration-200 ease-editorial hover:bg-well"
             >
               <X aria-hidden="true" className="size-5" />
             </button>
@@ -109,7 +109,7 @@ export function CertificateLightbox({ certificate, onClose }: CertificateLightbo
                 href={asset(certificate.document.href)}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-ink px-6 text-small font-semibold text-canvas transition-colors duration-200 ease-monograph hover:bg-ink-2"
+                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-ink px-6 text-small font-semibold text-canvas transition-colors duration-200 ease-editorial hover:bg-ink-2"
               >
                 <FileText aria-hidden="true" className="size-4" />
                 {certificate.document.label}

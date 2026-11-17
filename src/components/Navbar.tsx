@@ -26,7 +26,7 @@ export function Navbar() {
               <li key={link.href}>
                 <a
                   href={link.href}
-                  className="flex min-h-11 items-center rounded-full px-1.5 text-[0.8125rem] font-medium text-ink-2 transition-colors duration-200 ease-monograph hover:text-ink sm:px-3 sm:text-small"
+                  className="flex min-h-11 items-center rounded-full px-1.5 text-[0.8125rem] font-medium text-ink-2 transition-colors duration-200 ease-editorial hover:text-ink sm:px-3 sm:text-small"
                 >
                   {link.label}
                 </a>
@@ -39,7 +39,7 @@ export function Navbar() {
                   target="_blank"
                   rel="noreferrer noopener"
                   aria-label={site.nav.githubLabel}
-                  className="ml-1 grid size-11 place-items-center rounded-full text-ink transition-colors duration-200 ease-monograph hover:bg-well"
+                  className="ml-1 grid size-11 place-items-center rounded-full text-ink transition-colors duration-200 ease-editorial hover:bg-well"
                 >
                   <BrandIcon brand="github" className="size-5" />
                 </a>

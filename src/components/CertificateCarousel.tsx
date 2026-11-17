@@ -124,7 +124,7 @@ export function CertificateCarousel() {
               onClick={goPrevious}
               disabled={activeIndex === 0}
               aria-label={copy.previous}
-              className="grid size-12 shrink-0 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-200 ease-monograph hover:bg-well disabled:text-ink-3 disabled:hover:bg-surface"
+              className="grid size-12 shrink-0 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-200 ease-editorial hover:bg-well disabled:text-ink-3 disabled:hover:bg-surface"
             >
               <ArrowLeft aria-hidden="true" className="size-5" />
             </button>
@@ -141,7 +141,7 @@ export function CertificateCarousel() {
               onClick={goNext}
               disabled={activeIndex === lastIndex}
               aria-label={copy.next}
-              className="grid size-12 shrink-0 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-200 ease-monograph hover:bg-well disabled:text-ink-3 disabled:hover:bg-surface"
+              className="grid size-12 shrink-0 place-items-center rounded-full border border-hairline bg-surface text-ink transition-colors duration-200 ease-editorial hover:bg-well disabled:text-ink-3 disabled:hover:bg-surface"
             >
               <ArrowRight aria-hidden="true" className="size-5" />
             </button>
@@ -160,7 +160,7 @@ export function CertificateCarousel() {
                   >
                     <span
                       className={cn(
-                        'h-1.5 rounded-full transition-all duration-300 ease-monograph',
+                        'h-1.5 rounded-full transition-all duration-300 ease-editorial',
                         index === activeIndex ? 'w-6 bg-ink' : 'w-1.5 bg-ink-3 group-hover:bg-ink-2',
                       )}
                     />
@@ -177,7 +177,7 @@ export function CertificateCarousel() {
             <button
               type="button"
               onClick={() => setLightboxIndex(activeIndex)}
-              className="inline-flex min-h-12 items-center gap-2.5 rounded-full border border-ink px-6 text-small font-semibold text-ink transition-colors duration-200 ease-monograph hover:bg-ink hover:text-canvas"
+              className="inline-flex min-h-12 items-center gap-2.5 rounded-full border border-ink px-6 text-small font-semibold text-ink transition-colors duration-200 ease-editorial hover:bg-ink hover:text-canvas"
             >
               <Maximize2 aria-hidden="true" className="size-4" />
               {copy.inspect}

@@ -16,8 +16,8 @@ import { join } from 'node:path'
 const skillScripts = join(homedir(), '.claude', 'skills', 'prom-design-pro', 'scripts')
 const gate = process.argv[2]
 
-const volumes = ['vol1', 'vol2', 'vol3', 'vol4']
-const surfaces = ['color-canvas', 'color-surface', 'color-well']
+// The paper surfaces of the page, and the cool canvas of the architecture diagram.
+const surfaces = ['color-canvas', 'color-surface', 'color-well', 'color-diagram-canvas']
 
 const gates = {
   tokens: {
@@ -31,17 +31,9 @@ const gates = {
       '--text', 'color-ink,color-ink-2',
       '--surface', surfaces.join(','),
       '--ground', 'color-canvas',
-      // Small accent text on a dark cover and on its tint.
-      ...volumes.flatMap((volume) => [
-        '--pair', `color-${volume}-accent-on-cover:color-${volume}-cover`,
-        '--pair', `color-${volume}-accent-on-cover:color-${volume}-tint`,
-        '--pair', `color-white:color-${volume}-cover`,
-        '--pair', `color-white:color-${volume}-tint`,
-      ]),
-      // Small accent text on every paper surface.
-      ...volumes.flatMap((volume) =>
-        surfaces.flatMap((surface) => ['--pair', `color-${volume}-accent-on-paper:${surface}`]),
-      ),
+      // Inside the diagram: the selected flow filter, and a live connector label.
+      '--pair', 'color-surface:color-diagram-active',
+      '--pair', 'color-diagram-active:color-surface',
       '--quiet',
     ],
   },

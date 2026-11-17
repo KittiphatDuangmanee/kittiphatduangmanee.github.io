@@ -79,12 +79,12 @@ export function Hero() {
           <motion.div variants={rise} transition={riseTransition} className="mt-8">
             <a
               href={site.hero.cta.href}
-              className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-ink px-6 text-small font-semibold text-canvas transition-[background-color,scale] duration-150 ease-monograph hover:bg-ink-2 active:scale-[0.97]"
+              className="group inline-flex min-h-12 items-center gap-3 rounded-full bg-ink px-6 text-small font-semibold text-canvas transition-[background-color,scale] duration-150 ease-editorial hover:bg-ink-2 active:scale-[0.97]"
             >
               {site.hero.cta.label}
               <ArrowDown
                 aria-hidden="true"
-                className="size-4 transition-transform duration-300 ease-monograph group-hover:translate-y-0.5"
+                className="size-4 transition-transform duration-300 ease-editorial group-hover:translate-y-0.5"
               />
             </a>
           </motion.div>

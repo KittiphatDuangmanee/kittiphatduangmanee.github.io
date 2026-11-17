@@ -1,13 +1,8 @@
 // The typed contract for every piece of portfolio content. Components read
 // these shapes; no copy, metric or list is written inside JSX.
 
-export type VolumeId = 'vol-1' | 'vol-2' | 'vol-3' | 'vol-4'
-
 /** Path under public/, without the base path. Lowercase, no leading slash. */
 export type AssetPath = string
-
-/** A reference to a design token defined in src/styles/tokens.css. */
-export type CssVarRef = `var(--${string})`
 
 export interface ImageAsset {
   src: AssetPath
@@ -24,10 +19,10 @@ export interface ExternalLink {
   kind: LinkKind
 }
 
-// ---------------------------------------------------------------- profile ---
+// ------------------------------------------------------------- technology ---
 
-/** Every technology in the personal core stack. Each one has a mark in TechIcon. */
-export type TechId =
+/** Every technology in the personal core stack: verified hands-on skills. */
+export type CoreTechId =
   | 'python'
   | 'fastapi'
   | 'java'
@@ -46,20 +41,30 @@ export type TechId =
   | 'aws'
   | 'git'
 
-export interface StackItem {
-  id: TechId
+/** Tools used in a single project. They never appear in the core stack. */
+export type ProjectTechId =
+  | 'hono'
+  | 'drizzle-orm'
+  | 'cockroachdb'
+  | 'cloudflare-workers'
+  | 'line-messaging-api'
+  | 'smtp'
+
+/** Every technology with a mark in TechIcon. */
+export type TechId = CoreTechId | ProjectTechId
+
+export interface StackItem<Id extends TechId = TechId> {
+  id: Id
   label: string
 }
+
+// ---------------------------------------------------------------- profile ---
 
 export interface StackGroup {
   id: string
   label: string
-  items: readonly StackItem[]
-}
-
-export interface CaptionLine {
-  label: string
-  value: string
+  /** Typed to the core stack, so a project-only tool cannot be listed here. */
+  items: readonly StackItem<CoreTechId>[]
 }
 
 export interface ProfileData {
@@ -82,34 +87,12 @@ export interface ProfileData {
   links: readonly ExternalLink[]
 }
 
-// ------------------------------------------------------------------ theme ---
-
-export interface MonographTheme {
-  id: VolumeId
-  cover: CssVarRef
-  accent: CssVarRef
-  tint: CssVarRef
-  /** Accent sibling that clears 4.5:1 as small text on the cover and the tint. */
-  accentOnCover: CssVarRef
-  /** Accent sibling that clears 4.5:1 as small text on paper surfaces. */
-  accentOnPaper: CssVarRef
-}
-
 // ----------------------------------------------------------- architecture ---
 
-export type NodeKind =
-  | 'source'
-  | 'service'
-  | 'gateway'
-  | 'registry'
-  | 'datastore'
-  | 'cache'
-  | 'broker'
-  | 'client'
-  | 'channel'
-  | 'external'
+/** Icons drawn for the diagram, for components that have no brand mark. */
+export type DiagramGlyphId = 'solar-array' | 'scheduler' | 'anomaly-engine' | 'alerting' | 'browser' | 'sales-chart'
 
-export type EdgeKind = 'request' | 'event' | 'write' | 'read' | 'alert' | 'discovery'
+export type DiagramIcon = { kind: 'tech'; id: TechId } | { kind: 'glyph'; id: DiagramGlyphId }
 
 /** One based grid cell. */
 export interface GridPos {
@@ -117,38 +100,40 @@ export interface GridPos {
   row: number
 }
 
-export interface NodeMetric {
-  label: string
-  value: string
+export interface GridSize {
+  cols: number
+  rows: number
 }
+
+export type NodeSide = 'top' | 'right' | 'bottom' | 'left'
 
 export interface ArchitectureNode {
   id: string
   label: string
-  kind: NodeKind
+  /** Compact technology line under the label. */
   tech: string
-  description: string
-  /** Illustrative figures only. Never production data. */
-  metrics: readonly NodeMetric[]
-  position: { wide: GridPos; narrow: GridPos }
-}
-
-export interface ArchitectureGroup {
-  id: string
-  label: string
-  /** Where the label starts along the top border, as a share of the frame width, so it clears incoming arrows. */
-  labelAt: { wide: number; narrow: number }
-  nodeIds: readonly string[]
+  icon: DiagramIcon
+  /** What flows into the component. */
+  input: string
+  /** What it hands on. */
+  output: string
+  /** The engineering decision behind it. */
+  decision: string
+  /** Cell in the wide layout. Narrow layouts transpose the grid. */
+  position: GridPos
 }
 
 export interface ArchitectureEdge {
   id: string
-  /** A node id or a group id. */
   from: string
-  /** A node id or a group id. */
   to: string
-  kind: EdgeKind
   label: string
+  /**
+   * Which side the connector leaves and which it enters, in the wide layout.
+   * `fromAt` and `toAt` place it along that side (0 to 1, 0.5 by default) so
+   * two connectors on one side never share a point.
+   */
+  route: { from: NodeSide; to: NodeSide; fromAt?: number; toAt?: number }
 }
 
 export interface ArchitectureFlow {
@@ -158,177 +143,59 @@ export interface ArchitectureFlow {
   edgeIds: readonly string[]
 }
 
-export interface GridSize {
-  cols: number
-  rows: number
-}
-
 export interface ArchitectureDiagram {
   id: string
   title: string
+  /** One sentence shown in the inspector until a component is selected. */
+  summary: string
   /** Read by screen readers in place of the drawing. */
   ariaSummary: string
-  /** Honest provenance label shown on the visual. */
-  notice: string
-  /** Words that tell a first time visitor the drawing is interactive. */
-  hint: string
-  labels: {
-    flows: string
-    kinds: Readonly<Record<NodeKind, string>>
-  }
-  grid: { wide: GridSize; narrow: GridSize }
-  /**
-   * Empty block of the wide grid where the detail panel sits, so the drawing
-   * keeps the whole viewport. On narrow layouts the panel goes underneath.
-   */
-  inspectorArea: GridPos & { colSpan: number; rowSpan: number }
+  /** Grid of the wide layout. */
+  grid: GridSize
   nodes: readonly ArchitectureNode[]
-  groups: readonly ArchitectureGroup[]
   edges: readonly ArchitectureEdge[]
   flows: readonly ArchitectureFlow[]
-  defaultNodeId: string
 }
-
-// --------------------------------------------------------------- previews ---
-
-export type OrderStage = 'ordered' | 'cooking' | 'served' | 'paid'
-export type OrderViewId = 'tables' | 'menu' | 'sales'
-
-export interface OrderLine {
-  itemId: string
-  quantity: number
-}
-
-export interface OrderTable {
-  id: string
-  label: string
-  guests: number
-  stage: OrderStage
-  lines: readonly OrderLine[]
-}
-
-export interface MenuItem {
-  id: string
-  name: string
-  category: string
-  price: number
-  available: boolean
-}
-
-export interface OrderBoardPreview {
-  notice: string
-  hint: string
-  currencySymbol: string
-  views: readonly { id: OrderViewId; label: string }[]
-  stages: readonly { id: OrderStage; label: string }[]
-  tables: readonly OrderTable[]
-  menu: readonly MenuItem[]
-  sales: {
-    todayLabel: string
-    todayBase: number
-    days: readonly { day: string; total: number }[]
-  }
-  labels: {
-    viewSwitcher: string
-    tableList: string
-    guests: string
-    bill: string
-    subtotal: string
-    advance: string
-    settled: string
-    available: string
-    unavailable: string
-    toggleAvailability: string
-    salesHeading: string
-    salesCaption: string
-    tablesOpen: string
-    averageBill: string
-  }
-}
-
-export interface XpProbability {
-  label: string
-  value: number
-}
-
-export interface XpSurveyProfile {
-  id: string
-  label: string
-  survey: readonly CaptionLine[]
-  prediction: {
-    classLabel: string
-    probabilities: readonly XpProbability[]
-  }
-  xpAward: number
-}
-
-export interface XpTrackerPreview {
-  notice: string
-  hint: string
-  xpPerLevel: number
-  start: { level: number; xp: number; streak: number }
-  weekDays: readonly string[]
-  /** How many days of the current week are already checked in. */
-  daysDone: number
-  profiles: readonly XpSurveyProfile[]
-  labels: {
-    profileSwitcher: string
-    survey: string
-    prediction: string
-    model: string
-    level: string
-    xp: string
-    streak: string
-    streakUnit: string
-    log: string
-    logged: string
-    reset: string
-    award: string
-    weekComplete: string
-  }
-}
-
-/** A count of strings by state, shown beside the VOL. I diagram. Synthetic. */
-export interface StringStatusSummary {
-  label: string
-  states: readonly { id: 'normal' | 'warning' | 'alarm'; label: string; count: number }[]
-}
-
-export type ProjectVisual =
-  | { kind: 'solar-architecture'; diagram: ArchitectureDiagram; strings: StringStatusSummary }
-  | { kind: 'microservices'; diagram: ArchitectureDiagram }
-  | { kind: 'order-board'; preview: OrderBoardPreview }
-  | { kind: 'xp-tracker'; preview: XpTrackerPreview }
 
 // --------------------------------------------------------------- projects ---
 
-export interface ProjectDecision {
-  heading: string
-  body: string
+export type ProjectId = 'solar' | 'orderdi'
+
+/** One real screen of the product: a capture or an exported design frame. */
+export interface ProjectScreen {
+  id: string
+  /** Short name shown in the window chrome. */
+  title: string
+  /** One sentence on what the screen shows. */
+  caption: string
+  /** 16:10 crop for the carousel. */
+  card: ImageAsset
+  /** The whole frame at full resolution, for the zoom view. */
+  full: ImageAsset
 }
 
-export interface ProjectVolume {
-  id: VolumeId
-  /** DOM id of the article, used by the index rail and the jump pills. */
+export interface Project {
+  id: ProjectId
+  /** DOM id of the article. */
   anchor: string
-  volume: { numeral: 'I' | 'II' | 'III' | 'IV'; label: string }
   title: string
-  /** Short form for the index rail and the jump pills. */
-  shortTitle: string
-  subtitle: string
-  /** Kept as separate fields so the page never has to join them with a dash. */
+  subtitle?: string
+  /** Role or context, as parts the page joins with a middot. Never a dash. */
+  badge: readonly string[]
   context: { role: string; organisation?: string; period?: string }
-  domainBadge: string
+  /** Two or three plain sentences for the card. */
   summary: string
-  problem: readonly string[]
-  decisions: readonly ProjectDecision[]
-  stack: readonly string[]
-  quickMetric: { label: string; value: string; synthetic: boolean }
-  links: readonly ExternalLink[]
-  /** Shown when there is no public repository to link to. */
-  linkNote?: string
-  theme: MonographTheme
-  visual: ProjectVisual
+  stack: readonly StackItem[]
+  screens: readonly ProjectScreen[]
+  /** The deployed application, when there is one to visit. */
+  live?: ExternalLink
+  /** Shown in place of a link when the system is not public. */
+  note?: string
+  detail: {
+    overview: readonly string[]
+    contributions: readonly string[]
+    diagram: ArchitectureDiagram
+  }
 }
 
 // ----------------------------------------------------------- certificates ---

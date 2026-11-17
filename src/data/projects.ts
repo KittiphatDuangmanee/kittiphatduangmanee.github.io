@@ -1,200 +1,179 @@
-import { salonMeshDiagram } from './diagrams/salon-mesh.ts'
+import { orderDiEdgeDiagram } from './diagrams/orderdi-edge.ts'
 import { solarTelemetryDiagram } from './diagrams/solar-telemetry.ts'
-import { orderDiPreview } from './previews/orderdi.ts'
-import { realWorldXpPreview } from './previews/realworld-xp.ts'
-import { monographThemes } from './themes.ts'
-import type { ProjectVolume } from './types.ts'
+import type { Project, ProjectScreen } from './types.ts'
 
-export const projects: readonly ProjectVolume[] = [
+/**
+ * One screen as the asset pipeline writes it: screen-N.webp is the whole
+ * frame, screen-N-card.webp the crop the carousel shows.
+ */
+function screen(
+  project: Project['id'],
+  number: number,
+  title: string,
+  caption: string,
+  alt: string,
+  size: { card: [number, number]; full: [number, number] },
+): ProjectScreen {
+  const base = `images/projects/${project}/screen-${number}`
+  return {
+    id: `${project}-${number}`,
+    title,
+    caption,
+    card: { src: `${base}-card.webp`, width: size.card[0], height: size.card[1], alt },
+    full: { src: `${base}.webp`, width: size.full[0], height: size.full[1], alt },
+  }
+}
+
+// Captured from the deployed application at 1440 by 900, device scale 2.
+const orderDiCapture = { card: [1440, 900], full: [2880, 1800] } satisfies Parameters<typeof screen>[5]
+
+// Frames exported at 2x from the Solar_Monitoring Figma file (1440 by 1024),
+// with synthetic data. The asset pipeline covers the company logo.
+const solarFrame = { card: [1440, 900], full: [2880, 2048] } satisfies Parameters<typeof screen>[5]
+
+export const projects: readonly Project[] = [
   {
-    id: 'vol-1',
-    anchor: 'volume-1',
-    volume: { numeral: 'I', label: 'VOL. I' },
+    id: 'solar',
+    anchor: 'project-solar',
     title: 'Solar String Monitoring Alarm System',
-    shortTitle: 'Solar Alarm System',
-    subtitle: 'String level anomaly detection for solar plants',
+    badge: ['SCG Cleanergy', 'Application Design Intern'],
     context: {
       role: 'Application Design Intern',
       organisation: 'SCG Cleanergy',
       period: 'Nov 2025 to Mar 2026',
     },
-    domainBadge: 'Telemetry · Alerting',
     summary:
-      'A monitoring dashboard and alarm pipeline that watches a solar plant one string at a time and tells the operator when one drifts.',
-    problem: [
-      'A solar plant loses output one string at a time, and a plant level total hides it: a single weak string disappears inside the site figure. Operators needed to see which string drifted and when, and to hear about it without watching a screen.',
-      'Built during a five month internship. What is shown here is an abstracted architecture with synthetic figures. No production data, screens, site names or hostnames are reproduced.',
+      'Monitors a solar plant one string at a time. Every five minutes it collects current and voltage, compares each string with its threshold, and marks it normal, warning or alarm. A string in alarm reaches the operators by LINE and email, so nobody has to watch the dashboard.',
+    stack: [
+      { id: 'python', label: 'Python' },
+      { id: 'fastapi', label: 'FastAPI' },
+      { id: 'react', label: 'React' },
+      { id: 'timescaledb', label: 'TimescaleDB' },
+      { id: 'redis', label: 'Redis' },
+      { id: 'line-messaging-api', label: 'LINE Messaging API' },
+      { id: 'smtp', label: 'SMTP' },
     ],
-    decisions: [
-      {
-        heading: 'Ingest on a schedule, evaluate on arrival',
-        body: 'A FastAPI job pulls plant readings on a fixed interval and runs the deviation check as each batch lands. Alarms are raised by the pipeline, not by someone opening a page.',
-      },
-      {
-        heading: 'Two stores, two jobs',
-        body: 'TimescaleDB hypertables keep reading history and the event log. Redis keeps only what the dashboard asks for constantly: the latest status per string, the installed list per site, and the chart series for today.',
-      },
-      {
-        heading: 'Thresholds on deviation',
-        body: 'Each string is checked for current and voltage deviation and sorted into normal, warning or alarm, which is what the status tiles on the dashboard show.',
-      },
-      {
-        heading: 'Alerts leave the dashboard',
-        body: 'A string entering alarm becomes a LINE message and an email, so the first notice arrives where the operator already is.',
-      },
+    screens: [
+      screen(
+        'solar',
+        1,
+        'Plant overview',
+        'Site health, the number of strings in alarm, and a list of active alarms that filters by site, inverter, string and error type.',
+        'Solar monitoring dashboard: a site health ring, 64 active string alarms, a site status ring, and a table of active alarms.',
+        solarFrame,
+      ),
+      screen(
+        'solar',
+        2,
+        'String status grid',
+        'Every string of a site as a tile, grouped by inverter and coloured normal, warning or alarm.',
+        'String status grid for Site A: counts of alarm, warning and normal strings above numbered tiles for each inverter, coloured red, orange or green.',
+        solarFrame,
+      ),
+      screen(
+        'solar',
+        3,
+        'String performance',
+        'Output of each string hour by hour for one inverter. A string that lags its neighbours shows up in a different colour from the rest of its column.',
+        'Performance heatmap: strings PV01 to PV18 down the side and the hours of the day across, each cell coloured by output.',
+        solarFrame,
+      ),
+      screen(
+        'solar',
+        4,
+        'String detail',
+        'One string on its own: its alarm and warning faults with start time and state, and its performance ratio day by day.',
+        'Detail page for string PV01: three device broken faults with start times, above a line chart of the daily and 15 day average performance ratio.',
+        solarFrame,
+      ),
+      screen(
+        'solar',
+        5,
+        'Event history',
+        'Past faults counted by type and by inverter state, above a table of every event that filters like the alarm list.',
+        'Event history: bar charts of faults by type and by inverter state, above a table of past warnings.',
+        solarFrame,
+      ),
     ],
-    stack: ['FastAPI', 'React', 'TimescaleDB', 'Redis', 'Anomaly Detection', 'LINE / Email Alerting'],
-    quickMetric: { label: 'Ingest cadence', value: '5 min', synthetic: true },
-    links: [],
-    linkNote: 'Internship work under NDA. Source code and screens are not public.',
-    theme: monographThemes['vol-1'],
-    visual: {
-      kind: 'solar-architecture',
+    note: 'Internal enterprise system. Screens are shown with synthetic data.',
+    detail: {
+      overview: [
+        'A solar plant loses output one string at a time, and the plant total hides it: one weak string disappears inside the site figure. Operators needed to see which string drifted and when, and to be told without watching a screen.',
+        'The system reads current and voltage for every string every five minutes, checks each reading against its threshold, keeps the history, and sends an alarm by LINE and email. I built it during my internship at SCG Cleanergy, from November 2025 to March 2026.',
+      ],
+      contributions: [
+        'Built the scheduled ingestion in FastAPI. A job collects current and voltage for every string at a fixed five minute interval.',
+        'Wrote the anomaly rules that compare each string against dynamic thresholds and classify it as normal, warning or alarm.',
+        'Split storage in two. TimescaleDB hypertables hold the history for time range queries, and Redis caches the latest state so the dashboard reads it in under a second.',
+        'Added alerts through the LINE Messaging API and SMTP email, so operators hear about an alarm without watching a screen.',
+        'Designed the monitoring dashboard in Figma and built it in React, down to string level diagnostics.',
+      ],
       diagram: solarTelemetryDiagram,
-      strings: {
-        label: 'Strings',
-        states: [
-          { id: 'normal', label: 'normal', count: 113 },
-          { id: 'warning', label: 'warning', count: 4 },
-          { id: 'alarm', label: 'alarm', count: 3 },
-        ],
-      },
     },
   },
   {
-    id: 'vol-2',
-    anchor: 'volume-2',
-    volume: { numeral: 'II', label: 'VOL. II' },
+    id: 'orderdi',
+    anchor: 'project-orderdi',
     title: 'OrderDi',
-    shortTitle: 'OrderDi',
-    subtitle: 'Restaurant order management platform',
+    subtitle: 'Restaurant order and POS platform',
+    badge: ['Full-stack web application', 'Live in production'],
     context: { role: 'Full-stack build' },
-    domainBadge: 'Edge · Point of sale',
     summary:
-      'An order workflow for restaurants that runs at the edge: staff edit the menu, track every open bill, and read the day in one sales view.',
-    problem: [
-      'A small restaurant runs on three questions: what is on the menu right now, what does each table owe, and how did today go. Paper tickets and a spreadsheet answer them late.',
-      'OrderDi puts all three in one place: real time menu editing, live bill tracking per table, and daily sales analytics.',
-    ],
-    decisions: [
-      {
-        heading: 'Run on the edge',
-        body: 'The API is a Hono 4 application on Cloudflare Workers, so there is no server to keep warm and requests are answered close to the restaurant.',
-      },
-      {
-        heading: 'One typed path from table to query',
-        body: 'TypeScript end to end, with Drizzle ORM describing the schema once. A change to a menu item is checked by the compiler from the form to the SQL.',
-      },
-      {
-        heading: 'Distributed SQL behind it',
-        body: 'CockroachDB speaks the PostgreSQL wire protocol, so orders and bills stay relational and transactional while the database scales out.',
-      },
-      {
-        heading: 'A bill is live state',
-        body: 'The bill for each table updates as orders are added and served, and the same order data feeds the daily sales view, so the two can never disagree.',
-      },
-    ],
-    stack: ['Hono 4', 'TypeScript', 'Tailwind CSS', 'Drizzle ORM', 'CockroachDB / PostgreSQL', 'Cloudflare Workers'],
-    quickMetric: { label: 'Runtime', value: 'Cloudflare Workers', synthetic: false },
-    links: [],
-    linkNote: 'Private repository.',
-    theme: monographThemes['vol-2'],
-    visual: { kind: 'order-board', preview: orderDiPreview },
-  },
-  {
-    id: 'vol-3',
-    anchor: 'volume-3',
-    volume: { numeral: 'III', label: 'VOL. III' },
-    title: 'Salon Booking Microservices Platform',
-    shortTitle: 'Salon Booking',
-    subtitle: 'Distributed booking and payments',
-    context: { role: 'Full-stack build' },
-    domainBadge: 'Microservices · Events',
-    summary:
-      'A salon booking product split into eight Spring Boot services behind one gateway, with payments confirmed through RabbitMQ events.',
-    problem: [
-      'Booking a salon touches accounts, salons, services, schedules, payments, notifications and reviews. In one application those concerns grow into each other, and a slow payment provider can stall the whole request.',
-      'This build separates them: each concern is a service with its own database, found through a registry and reached through one gateway.',
-    ],
-    decisions: [
-      {
-        heading: 'One door in',
-        body: 'Spring Cloud Gateway is the only public entry. It validates the Keycloak JWT, then routes by path to a service name, so clients never learn a service address.',
-      },
-      {
-        heading: 'Discovery over configuration',
-        body: 'Services register with Eureka on start. The gateway and the Feign clients resolve each other by name, which is what lets a service move or scale without a config change.',
-      },
-      {
-        heading: 'A database per service',
-        body: 'Eight services, eight schemas. A service reads another through a Feign call, never through a shared table, so each schema can change on its own.',
-      },
-      {
-        heading: 'Payment is an event',
-        body: 'The payment service creates a Stripe or Razorpay link. When the payment succeeds it publishes to RabbitMQ: one queue confirms the booking, another notifies the customer and the salon. Neither blocks the payment response.',
-      },
-    ],
+      'A point of sale for restaurants that runs in the browser. Staff open tables from a floor plan, ring up orders at the counter and keep the menu current, and the report page totals the sales as bills close. It is deployed on Cloudflare Workers, so there is no server to look after.',
     stack: [
-      'Java Spring Boot',
-      'Spring Cloud Gateway',
-      'Eureka Discovery',
-      'PostgreSQL',
-      'MySQL',
-      'Redis',
-      'RabbitMQ',
-      'Stripe / Razorpay',
-      'React',
+      { id: 'hono', label: 'Hono' },
+      { id: 'typescript', label: 'TypeScript' },
+      { id: 'tailwind-css', label: 'Tailwind CSS' },
+      { id: 'drizzle-orm', label: 'Drizzle ORM' },
+      { id: 'cockroachdb', label: 'CockroachDB' },
+      { id: 'cloudflare-workers', label: 'Cloudflare Workers' },
     ],
-    quickMetric: { label: 'Topology', value: '8 services, 1 gateway', synthetic: false },
-    links: [
-      {
-        label: 'Backend repository',
-        href: 'https://github.com/KittiphatDuangmanee/BackendSalonBooking-SpringBoot-',
-        kind: 'repo',
-      },
-      {
-        label: 'Frontend repository',
-        href: 'https://github.com/KittiphatDuangmanee/FrontEndSalonBooking-React-',
-        kind: 'repo',
-      },
+    screens: [
+      screen(
+        'orderdi',
+        1,
+        'Table floor plan',
+        'Tables grouped by zone, each with its status and seats. The plan updates on its own as tables open and close.',
+        'OrderDi table floor plan in Thai: 21 tables in two zones, each marked free with four seats, under zone and status filters.',
+        orderDiCapture,
+      ),
+      screen(
+        'orderdi',
+        2,
+        'Counter sale',
+        'The point of sale screen. The menu sits on the left by category, and the order, its total and the takeaway or dine-in switch on the right.',
+        'OrderDi counter sale screen in Thai: a grid of dishes with photos and prices beside an empty order panel showing a total of zero baht.',
+        orderDiCapture,
+      ),
+      screen(
+        'orderdi',
+        3,
+        'Menu management',
+        'Every dish has a price, a cost, an availability switch and its own option groups, such as spice level and toppings.',
+        'OrderDi menu management in Thai: a list of dishes with availability switches beside the detail panel of one dish with its price, cost and options.',
+        orderDiCapture,
+      ),
+      screen(
+        'orderdi',
+        4,
+        'Sales report',
+        'Seven days of sales: revenue, gross profit and closed bills, the split between PromptPay and cash, and the best selling dishes.',
+        'OrderDi sales report in Thai: summary figures, a payment method split, a daily sales bar chart and a best sellers list.',
+        orderDiCapture,
+      ),
     ],
-    theme: monographThemes['vol-3'],
-    visual: { kind: 'microservices', diagram: salonMeshDiagram },
-  },
-  {
-    id: 'vol-4',
-    anchor: 'volume-4',
-    volume: { numeral: 'IV', label: 'VOL. IV' },
-    title: 'RealWorld_XP',
-    shortTitle: 'RealWorld_XP',
-    subtitle: 'Gamified activity and lifestyle tracker',
-    context: { role: 'Team project', period: 'Aug 2025 to Oct 2025' },
-    domainBadge: 'ML · Gamification',
-    summary:
-      'A web application that classifies a lifestyle from a short survey with TabNet, then turns healthy days into XP, levels and streaks.',
-    problem: [
-      'Habit trackers ask for effort every day and give little back. The idea here was to make a day of real activity pay out like a game: answer a short survey, get a lifestyle class, earn XP for it.',
-      'The classifier is a TabNet model, a deep learning architecture built for tabular data, trained on the Half a Million Lifestyle dataset from Kaggle.',
-    ],
-    decisions: [
-      {
-        heading: 'Deep learning that fits a table',
-        body: 'Survey answers are rows and columns, not images or text. TabNet learns from tabular features directly and attends to a few of them at each step.',
-      },
-      {
-        heading: 'The model behind an API',
-        body: 'FastAPI serves the trained model. The Angular client posts survey answers and receives a class and its probabilities, so the model can be retrained without shipping a new front end.',
-      },
-      {
-        heading: 'XP as the feedback loop',
-        body: 'Activity earns XP, XP fills a level bar, and a daily check-in extends a streak that persists between sessions.',
-      },
-    ],
-    stack: ['Python', 'FastAPI', 'TabNet Deep Learning', 'Angular'],
-    quickMetric: { label: 'Model', value: 'TabNet', synthetic: false },
-    links: [],
-    linkNote: 'Team repository, not public.',
-    theme: monographThemes['vol-4'],
-    visual: { kind: 'xp-tracker', preview: realWorldXpPreview },
+    live: { label: 'Visit live app', href: 'https://orderdi.apps.sv-academy.org', kind: 'demo' },
+    detail: {
+      overview: [
+        'A small restaurant runs on three questions: what is on the menu right now, what does each table owe, and how did today go. Paper tickets and a spreadsheet answer them late.',
+        'OrderDi answers them from one web app. A table is opened from the floor plan, its orders build the bill, and every closed bill lands in the sales report. The whole application runs on Cloudflare Workers with CockroachDB behind it.',
+      ],
+      contributions: [
+        'Built the order and POS web app with Hono 4, TypeScript and Tailwind CSS, and deployed it on Cloudflare Workers so it is served from the edge.',
+        'Modelled menus, tables, live bills and order items as one typed relational schema in Drizzle ORM. The database is CockroachDB, which speaks the PostgreSQL wire protocol.',
+        'Implemented the table ordering flow, menu management, and daily sales totals that update as bills are paid.',
+      ],
+      diagram: orderDiEdgeDiagram,
+    },
   },
 ]

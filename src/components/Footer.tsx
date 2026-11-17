@@ -42,7 +42,7 @@ export function Footer() {
               type="button"
               onClick={() => copyToClipboard(profile.email)}
               className={cn(
-                'inline-flex min-h-12 min-w-40 items-center justify-center gap-2.5 rounded-full px-6 text-small font-semibold transition-colors duration-200 ease-monograph',
+                'inline-flex min-h-12 min-w-40 items-center justify-center gap-2.5 rounded-full px-6 text-small font-semibold transition-colors duration-200 ease-editorial',
                 copied ? 'bg-well text-ink' : 'bg-ink text-canvas hover:bg-ink-2',
               )}
             >
@@ -51,7 +51,7 @@ export function Footer() {
             </button>
             <a
               href={`mailto:${profile.email}`}
-              className="inline-flex min-h-12 items-center gap-2.5 rounded-full border border-hairline bg-surface px-6 text-small font-semibold text-ink transition-colors duration-200 ease-monograph hover:bg-well"
+              className="inline-flex min-h-12 items-center gap-2.5 rounded-full border border-hairline bg-surface px-6 text-small font-semibold text-ink transition-colors duration-200 ease-editorial hover:bg-well"
             >
               <Mail aria-hidden="true" className="size-4" />
               {copy.sendMail}
@@ -75,7 +75,7 @@ export function Footer() {
                     className="group inline-flex min-h-11 items-center gap-3 font-medium text-ink"
                   >
                     <BrandIcon brand={link.brand} className="size-5" />
-                    <span className="underline decoration-hairline decoration-2 underline-offset-4 transition-colors duration-200 ease-monograph group-hover:decoration-ink">
+                    <span className="underline decoration-hairline decoration-2 underline-offset-4 transition-colors duration-200 ease-editorial group-hover:decoration-ink">
                       {link.label}
                     </span>
                     <ArrowUpRight aria-hidden="true" className="size-4 text-ink-2" />

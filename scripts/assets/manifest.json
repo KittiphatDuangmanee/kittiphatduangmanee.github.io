@@ -43,5 +43,33 @@
   "outputs": {
     "previews": "public/images/certificates",
     "documents": "public/certificates"
+  },
+  "projects": {
+    "output": "public/images/projects",
+    "card": { "width": 1440, "aspect": [16, 10], "quality": 84 },
+    "full": { "maxWidth": 2880, "quality": 86 },
+    "sets": [
+      {
+        "id": "solar",
+        "note": "Frames exported at 2x from the Solar_Monitoring Figma file (synthetic data). The company logo in the sidebar is covered with the sidebar's own colour.",
+        "masks": [{ "box": [0, 40, 478, 240], "fillFrom": [24, 290] }],
+        "sources": [
+          "design/assets/projects/solar/originals/01-overview.png",
+          "design/assets/projects/solar/originals/02-string-status.png",
+          "design/assets/projects/solar/originals/03-string-performance.png",
+          "design/assets/projects/solar/originals/04-string-detail.png",
+          "design/assets/projects/solar/originals/05-event-history.png"
+        ]
+      },
+      {
+        "id": "orderdi",
+        "sources": [
+          "design/assets/projects/orderdi/01-floor-plan.png",
+          "design/assets/projects/orderdi/02-counter-sale.png",
+          "design/assets/projects/orderdi/03-menu-management.png",
+          "design/assets/projects/orderdi/04-sales-report.png"
+        ]
+      }
+    ]
   }
 }

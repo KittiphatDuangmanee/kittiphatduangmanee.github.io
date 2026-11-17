@@ -1,7 +1,8 @@
-import type { GridPos, GridSize } from '../../data/types.ts'
+import type { GridPos, GridSize, NodeSide } from '../../data/types.ts'
 
-// Pure geometry for the architecture diagrams: grid cells to pixel boxes,
-// edges clipped at box borders, and label wrapping. No React in here.
+// Pure geometry for the architecture diagram: grid cells to pixel boxes,
+// orthogonal connectors between box sides, and where a label can sit on a
+// connector. No React in here.
 
 export interface Point {
   x: number
@@ -15,117 +16,153 @@ export interface Rect {
   height: number
 }
 
-export interface BoxLimits {
-  maxWidth: number
-  maxHeight: number
-  gapX: number
-  gapY: number
+interface Size {
+  width: number
+  height: number
 }
 
-/** The pixel box of a node sitting in a one based grid cell. */
-export function cellRect(position: GridPos, grid: GridSize, area: { width: number; height: number }, box: BoxLimits): Rect {
+/** The pixel box of a node centred in a one based grid cell. */
+export function cellRect(position: GridPos, grid: GridSize, area: Size, node: Size): Rect {
   const cellWidth = area.width / grid.cols
   const cellHeight = area.height / grid.rows
-  const width = Math.max(0, Math.min(box.maxWidth, cellWidth - box.gapX))
-  const height = Math.max(0, Math.min(box.maxHeight, cellHeight - box.gapY))
-  const centreX = (position.col - 0.5) * cellWidth
-  const centreY = (position.row - 0.5) * cellHeight
-  return { x: centreX - width / 2, y: centreY - height / 2, width, height }
-}
-
-export function centreOf(rect: Rect): Point {
-  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
-}
-
-/** Smallest box around a set of boxes, grown by `padding` on every side. */
-export function unionRect(rects: readonly Rect[], padding: number): Rect {
-  const left = Math.min(...rects.map((rect) => rect.x)) - padding
-  const top = Math.min(...rects.map((rect) => rect.y)) - padding
-  const right = Math.max(...rects.map((rect) => rect.x + rect.width)) + padding
-  const bottom = Math.max(...rects.map((rect) => rect.y + rect.height)) + padding
-  return { x: left, y: top, width: right - left, height: bottom - top }
-}
-
-/** Where a ray from the centre of `rect` toward `target` leaves the box, plus a gap. */
-function exitPoint(rect: Rect, target: Point, gap: number): Point {
-  const centre = centreOf(rect)
-  const deltaX = target.x - centre.x
-  const deltaY = target.y - centre.y
-  if (deltaX === 0 && deltaY === 0) return centre
-  const scaleX = deltaX === 0 ? Infinity : rect.width / 2 / Math.abs(deltaX)
-  const scaleY = deltaY === 0 ? Infinity : rect.height / 2 / Math.abs(deltaY)
-  const scale = Math.min(scaleX, scaleY)
-  const length = Math.hypot(deltaX, deltaY)
   return {
-    x: centre.x + deltaX * scale + (deltaX / length) * gap,
-    y: centre.y + deltaY * scale + (deltaY / length) * gap,
+    x: (position.col - 0.5) * cellWidth - node.width / 2,
+    y: (position.row - 0.5) * cellHeight - node.height / 2,
+    width: node.width,
+    height: node.height,
   }
 }
 
-/** The point on the border of `rect` closest to `point` (which lies outside it). */
-function nearestBorderPoint(rect: Rect, point: Point): Point {
-  return {
-    x: Math.min(rect.x + rect.width, Math.max(rect.x, point.x)),
-    y: Math.min(rect.y + rect.height, Math.max(rect.y, point.y)),
+// A narrow stage reads top to bottom, so the wide layout is transposed:
+// columns become rows, and each side of a node turns with them.
+
+export function transposePos(position: GridPos): GridPos {
+  return { col: position.row, row: position.col }
+}
+
+export function transposeGrid(grid: GridSize): GridSize {
+  return { cols: grid.rows, rows: grid.cols }
+}
+
+const transposedSide: Record<NodeSide, NodeSide> = { left: 'top', top: 'left', right: 'bottom', bottom: 'right' }
+
+export function transposeSide(side: NodeSide): NodeSide {
+  return transposedSide[side]
+}
+
+function isHorizontal(side: NodeSide): boolean {
+  return side === 'left' || side === 'right'
+}
+
+/** The point `at` of the way along one side of a box, pushed `gap` px away from it. */
+function sidePoint(rect: Rect, side: NodeSide, at: number, gap: number): Point {
+  switch (side) {
+    case 'top':
+      return { x: rect.x + rect.width * at, y: rect.y - gap }
+    case 'bottom':
+      return { x: rect.x + rect.width * at, y: rect.y + rect.height + gap }
+    case 'left':
+      return { x: rect.x - gap, y: rect.y + rect.height * at }
+    case 'right':
+      return { x: rect.x + rect.width + gap, y: rect.y + rect.height * at }
   }
 }
 
-function pushAway(point: Point, from: Point, gap: number): Point {
-  const deltaX = point.x - from.x
-  const deltaY = point.y - from.y
-  const length = Math.hypot(deltaX, deltaY)
-  if (length === 0) return point
-  return { x: point.x - (deltaX / length) * gap, y: point.y - (deltaY / length) * gap }
-}
-
-interface Endpoint {
+export interface ConnectorEnd {
   rect: Rect
-  isGroup: boolean
+  side: NodeSide
+  /** 0 to 1 along the side. */
+  at: number
 }
 
 /**
- * Start and end of the line between two endpoints. A node connects from its
- * border toward the other endpoint. A group frame is met at the point on its
- * border nearest the node, so the line stays straight and short.
+ * Corner points of an orthogonal connector. Two facing sides give a straight
+ * line or a Z, two perpendicular sides give a single elbow. The line stops
+ * `arrowGap` px short of the target so the arrowhead does not touch the box.
  */
-export function edgeLine(from: Endpoint, to: Endpoint, gap: number): { start: Point; end: Point } {
-  if (to.isGroup && !from.isGroup) {
-    const anchor = nearestBorderPoint(to.rect, centreOf(from.rect))
-    return { start: exitPoint(from.rect, anchor, gap), end: pushAway(anchor, centreOf(from.rect), gap) }
+export function routeConnector(from: ConnectorEnd, to: ConnectorEnd, arrowGap: number): Point[] {
+  const start = sidePoint(from.rect, from.side, from.at, 0)
+  const end = sidePoint(to.rect, to.side, to.at, arrowGap)
+  const leavesSideways = isHorizontal(from.side)
+  const entersSideways = isHorizontal(to.side)
+
+  if (leavesSideways && entersSideways) {
+    if (Math.abs(start.y - end.y) < 0.5) return [start, end]
+    const middle = (start.x + end.x) / 2
+    return [start, { x: middle, y: start.y }, { x: middle, y: end.y }, end]
   }
-  if (from.isGroup && !to.isGroup) {
-    const anchor = nearestBorderPoint(from.rect, centreOf(to.rect))
-    return { start: pushAway(anchor, centreOf(to.rect), gap), end: exitPoint(to.rect, anchor, gap) }
+  if (!leavesSideways && !entersSideways) {
+    if (Math.abs(start.x - end.x) < 0.5) return [start, end]
+    const middle = (start.y + end.y) / 2
+    return [start, { x: start.x, y: middle }, { x: end.x, y: middle }, end]
   }
-  return {
-    start: exitPoint(from.rect, centreOf(to.rect), gap),
-    end: exitPoint(to.rect, centreOf(from.rect), gap),
-  }
+  if (leavesSideways) return [start, { x: end.x, y: start.y }, end]
+  return [start, { x: start.x, y: end.y }, end]
 }
 
-/**
- * Greedy word wrap using an estimated character width. SVG text cannot wrap
- * on its own, and measuring every label in the DOM is not worth a layout
- * pass, so an estimate of 0.58em per character (a little wide, on purpose)
- * keeps labels inside their boxes.
- */
-export function wrapLabel(label: string, maxWidth: number, fontSize: number, maxLines: number): string[] {
-  const maxChars = Math.max(4, Math.floor(maxWidth / (fontSize * 0.58)))
-  const lines: string[] = []
-  for (const word of label.split(' ')) {
-    const current = lines[lines.length - 1]
-    if (current !== undefined && `${current} ${word}`.length <= maxChars) {
-      lines[lines.length - 1] = `${current} ${word}`
-    } else if (lines.length < maxLines) {
-      lines.push(word)
-    } else {
-      lines[lines.length - 1] = `${current} ${word}`
+function round(value: number): string {
+  return value.toFixed(1)
+}
+
+/** SVG path through the corner points, with each corner rounded to `radius`. */
+export function connectorPath(points: readonly Point[], radius: number): string {
+  let path = `M${round(points[0].x)} ${round(points[0].y)}`
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const before = points[index - 1]
+    const corner = points[index]
+    const after = points[index + 1]
+    const lengthIn = Math.hypot(corner.x - before.x, corner.y - before.y)
+    const lengthOut = Math.hypot(after.x - corner.x, after.y - corner.y)
+    const cut = Math.min(radius, lengthIn / 2, lengthOut / 2)
+    if (cut < 0.5) {
+      path += ` L${round(corner.x)} ${round(corner.y)}`
+      continue
     }
+    const enterX = corner.x - ((corner.x - before.x) / lengthIn) * cut
+    const enterY = corner.y - ((corner.y - before.y) / lengthIn) * cut
+    const leaveX = corner.x + ((after.x - corner.x) / lengthOut) * cut
+    const leaveY = corner.y + ((after.y - corner.y) / lengthOut) * cut
+    path += ` L${round(enterX)} ${round(enterY)} Q${round(corner.x)} ${round(corner.y)} ${round(leaveX)} ${round(leaveY)}`
   }
-  return lines
+  const last = points[points.length - 1]
+  return `${path} L${round(last.x)} ${round(last.y)}`
 }
 
-/** True when a single line of mono text fits the given width. */
-export function monoFits(text: string, maxWidth: number, fontSize: number): boolean {
-  return text.length * fontSize * 0.64 <= maxWidth
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
+/**
+ * Where a label chip can sit on a connector: the middle of its longest
+ * segment that has room for the chip. A sideways segment needs the chip's
+ * width, an upright one its height, and in both cases the chip must stay
+ * clear of every node. Returns null when no segment fits, and the label is
+ * then left to the inspector.
+ */
+export function labelAnchor(
+  points: readonly Point[],
+  chip: Size,
+  margin: number,
+  obstacles: Iterable<Rect>,
+): Point | null {
+  const nodes = [...obstacles]
+  let best: { length: number; anchor: Point } | null = null
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const from = points[index]
+    const to = points[index + 1]
+    const sideways = Math.abs(to.y - from.y) < 0.5
+    const length = Math.hypot(to.x - from.x, to.y - from.y)
+    if (length < (sideways ? chip.width : chip.height) + margin) continue
+    if (best && length <= best.length) continue
+    const anchor = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
+    const box = {
+      x: anchor.x - chip.width / 2 - 2,
+      y: anchor.y - chip.height / 2 - 2,
+      width: chip.width + 4,
+      height: chip.height + 4,
+    }
+    if (nodes.some((node) => overlaps(box, node))) continue
+    best = { length, anchor }
+  }
+  return best ? best.anchor : null
 }
