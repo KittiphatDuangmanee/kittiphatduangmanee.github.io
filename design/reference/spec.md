@@ -81,7 +81,7 @@ Load via Google Fonts (with system fallbacks):
    - **Name format:** the full name is `Kittiphat Duangmanee`. With the nickname it is always `Kittiphat Duangmanee (Mark)`, never a quoted nickname between the given and family name.
    - **Copy punctuation:** no em dash or en dash in site copy (`npm run verify:data` enforces it). Use a comma, a colon, a period, or the word `to` in date ranges.
 3. **Projects (section 4):** a plain `h2` `Projects` with one line under it, then the two project showcase cards (`mt-14 lg:mt-20`, `gap-20 lg:gap-28` between them). No eyebrow, no index rail, no jump pills.
-4. **Certifications (3D Coverflow Carousel):** Full-width centered showcase displaying the 4 certificates (`AWS`, `depa`, `ARIT`, `LCCE`).
+4. **Certifications (3D Coverflow Carousel):** Full-width centered showcase displaying the 4 certificates (`AWS`, `depa`, `ARIT`, `Certiport`).
 5. **Footer / Contact:** Clean colophon with build stack note, email copy button, and external profiles.
 
 ---

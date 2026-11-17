@@ -50,11 +50,11 @@ Exactly **2** finished projects. Unfinished or undeployed work (the salon bookin
 - **Copy:** plain sentences, run through the humanizer rules: no "not X but Y", no one-line closers, no reflex triads, no inflated words, no dash characters.
 
 ### Certifications (`src/data/certificates.ts`)
-Include all **4** certificates in the 3D Coverflow Carousel:
-1. **AWS Certified Cloud Practitioner**
-2. **depa Software Security Certification**
-3. **ARIT Software Security Certification**
-4. **LINK Certified Cabling Engineer (LCCE)**
+Include all **4** certificates in the 3D Coverflow Carousel. Titles are written exactly as each document states them, never as a stronger credential:
+1. **AWS Cloud Practitioner Essentials** (AWS Training & Certification, course completion certificate)
+2. **Security Engineer Training Program** (depa with ARIT, 60 hour training certificate)
+3. **Security Engineer Program, Selected Participant** (ARIT Co., Ltd., selection certificate)
+4. **IT Specialist: Cybersecurity** (Certiport, a Pearson VUE business, exam based certification)
 
 ---
 

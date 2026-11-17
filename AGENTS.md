@@ -27,7 +27,8 @@ Before building UI components, ensure raw assets from `design/assets/` are proce
    - Must apply EXIF auto-orientation first to prevent sideways rotation from DSLR metadata.
    - Resize to `560px` width (preserving aspect ratio) and export as `public/images/profile-avatar.webp` (quality ~82–85).
 2. **Certificates (`design/assets/certificates/`):**
-   - Process all **4** certificate PDFs (`AWS_Cloud_Practitioner_Certificate.pdf`, `Depa_certificate.pdf`, `arit_certificate.pdf`, and the `LCCE` certificate PDF—verify exact filenames in directory before running script).
+   - Process all **4** certificate PDFs listed under `certificates` in `scripts/assets/manifest.json`: `AWS_Cloud_Practioner_Certificate.pdf` (the source file is spelled this way), `Depa_certificate.pdf`, `arit_certificate.pdf` and `Cybersecurity_certificate.pdf` (Certiport IT Specialist: Cybersecurity).
+   - Publish page 1 only. Page 2 of the Certiport PDF is a score report with private contact details and registration ids.
    - Render page 1 of each PDF into high-DPI `.webp` preview images under `public/images/certificates/` for fast carousel rendering.
    - Copy/expose sanitized `.pdf` files under `public/certificates/` so users can view or download full certificates from the lightbox modal.
 3. **Project Screens (`design/assets/projects/<solar|orderdi>/`):**
