@@ -39,6 +39,7 @@ export const site = {
       play: 'Play slideshow',
       goTo: 'Show screen',
       zoom: 'View full size',
+      bringToFront: 'Bring to front',
       counterSeparator: '/',
     },
     modal: {
@@ -72,7 +73,7 @@ export const site = {
     next: 'Next certificate',
     goTo: 'Show certificate',
     inspect: 'Inspect certificate',
-    bringToCentre: 'Bring to centre',
+    bringToFront: 'Bring to front',
     counterSeparator: '/',
     lightbox: {
       close: 'Close',

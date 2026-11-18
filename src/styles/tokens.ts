@@ -20,11 +20,8 @@ export const duration = {
 export const tilt = {
   spring: { stiffness: 260, damping: 24, mass: 0.6 },
   maxCertificate: 6,
-} as const
-
-/** Perspective distances in pixels. */
-export const perspective = {
-  coverflow: 1400,
+  /** Perspective of the tilting card itself, in px. */
+  perspective: 1400,
 } as const
 
 /**
@@ -52,19 +49,9 @@ export const reveal = {
   transition: { duration: 0.5, ease },
 } as const
 
-/**
- * Project screenshot carousel. A slide travels `slideOffset` px on a spring
- * with no overshoot while it cross-fades; a drag past `dragThreshold` px or a
- * flick faster than `flickVelocity` px/s changes the slide.
- */
+/** Project screen ring autoplay: one screen every few seconds. */
 export const carousel = {
   intervalSeconds: 4.5,
-  slideOffset: 28,
-  slideSpring: { type: 'spring', stiffness: 320, damping: 36, mass: 0.9 },
-  fade: { duration: 0.22, ease },
-  dragThreshold: 50,
-  flickVelocity: 400,
-  dragElastic: 0.18,
   /** Longest frame gap counted toward the timer, so a background tab never skips slides. */
   maxFrameMs: 100,
 } as const
@@ -107,31 +94,79 @@ export const diagram = {
   labelMargin: 8,
 } as const
 
-export interface CoverflowPose {
-  x: string
-  scale: number
-  rotateY: number
-  zIndex: number
-  opacity: number
-}
-
-/** 3D coverflow: spring, drag threshold and the four position states. */
-export const coverflow = {
-  spring: { type: 'spring', stiffness: 280, damping: 28 },
+/**
+ * 3D circular gallery, used for the project screens and the certificates.
+ * Cards stand on a ring seen from outside, `stepDegrees` apart: the front
+ * card faces the reader and its neighbours curve away. Every length is a
+ * multiple of the card width, so the ring keeps its shape at any size.
+ */
+export const ring = {
+  stepDegrees: 40,
+  /** Gap between neighbours on the ring: 1 means their edges just meet. */
+  spacing: 1.06,
+  /** Perspective distance as a multiple of the card width. */
+  perspective: 3,
+  /** Opacity one step from the front. It falls to 0 halfway round, where a card changes sides. */
+  neighbourOpacity: 0.85,
+  /** Card width as a share of the stage width, below and from `wideFrom` px of stage. */
+  cardShare: { narrow: 0.7, wide: 0.5 },
+  wideFrom: 640,
+  maxCardWidth: { screens: 640, certificates: 440 },
+  /** Height in px of the window chrome above a project screen. */
+  screenChrome: 36,
+  /** Certificate cards: A4 landscape, width over height. */
+  certificateRatio: 1.414,
+  /** Vertical room above and below the cards for their shadow, in px. */
+  stagePad: 28,
+  /** Overdamped, so the ring settles without swinging past the card. */
+  spring: { type: 'spring', stiffness: 260, damping: 34, mass: 0.9 },
+  /** Pointer travel for one step, as a share of the card width. */
+  dragStep: 0.6,
+  /** A release past this many px, or faster than `flickVelocity` px/s, always moves one card. */
   dragThreshold: 50,
-  poses: {
-    center: { x: '0%', scale: 1, rotateY: 0, zIndex: 30, opacity: 1 },
-    left: { x: '-56%', scale: 0.85, rotateY: 22, zIndex: 20, opacity: 0.72 },
-    right: { x: '56%', scale: 0.85, rotateY: -22, zIndex: 20, opacity: 0.72 },
-    parkedLeft: { x: '-92%', scale: 0.7, rotateY: 32, zIndex: 10, opacity: 0 },
-    parkedRight: { x: '92%', scale: 0.7, rotateY: -32, zIndex: 10, opacity: 0 },
-  } satisfies Record<string, CoverflowPose>,
+  flickVelocity: 400,
+  /** Seconds of release velocity added to where the ring lands. */
+  flickProjection: 0.15,
+  /** Reduced motion: the ring jumps and fades back in. */
+  reducedFade: { duration: 0.22, ease },
 } as const
 
-/** Maps offset = index - activeIndex to its pose. */
-export function coverflowPose(offset: number): CoverflowPose {
-  if (offset === 0) return coverflow.poses.center
-  if (offset === -1) return coverflow.poses.left
-  if (offset === 1) return coverflow.poses.right
-  return offset < 0 ? coverflow.poses.parkedLeft : coverflow.poses.parkedRight
+export interface RingPose {
+  x: number
+  z: number
+  rotateY: number
+  opacity: number
+  zIndex: number
+}
+
+/** Ring radius in px for a card width, wide enough that neighbours never cut into each other. */
+export function ringRadius(cardWidth: number): number {
+  const step = (ring.stepDegrees * Math.PI) / 180
+  return (ring.spacing * (cardWidth / 2) * (1 + Math.cos(step))) / Math.sin(step)
+}
+
+/**
+ * Pose of a card `offset` steps from the front (fractional while the ring
+ * turns) in a ring of `count` cards. The front card sits at z 0, so it shows
+ * at its natural size.
+ */
+export function ringPose(offset: number, count: number, cardWidth: number): RingPose {
+  const degrees = offset * ring.stepDegrees
+  const angle = (degrees * Math.PI) / 180
+  const radius = ringRadius(cardWidth)
+  const distance = Math.abs(offset)
+  const half = count / 2
+  const opacity =
+    distance <= 1
+      ? 1 - distance * (1 - ring.neighbourOpacity)
+      : half <= 1
+        ? 0
+        : Math.max(0, ring.neighbourOpacity * (1 - (distance - 1) / (half - 1)))
+  return {
+    x: radius * Math.sin(angle),
+    z: radius * (Math.cos(angle) - 1),
+    rotateY: degrees,
+    opacity,
+    zIndex: Math.max(1, 30 - Math.round(distance * 10)),
+  }
 }

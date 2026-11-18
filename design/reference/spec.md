@@ -38,7 +38,7 @@ A cool slate canvas, so the diagram reads as an engineering drawing set into the
 - Node shadow `0 1px 2px rgba(15,23,42,0.06), 0 3px 8px -3px rgba(15,23,42,0.1)`; selected node `0 1px 2px rgba(15,23,42,0.06), 0 10px 20px -10px rgba(37,99,235,0.55)`
 
 ### Elevation
-- **Window** (screen carousel frame): `0 12px 36px -12px rgba(20, 21, 23, 0.12)`
+- **Window** (project screen cards on the ring): `0 12px 36px -12px rgba(20, 21, 23, 0.12)`
 - **Modal** (detail modal, lightboxes): `0 24px 48px -12px rgba(20, 21, 23, 0.22), 0 4px 12px -2px rgba(20, 21, 23, 0.08)`
 - **Scrim:** `rgba(20, 21, 23, 0.46)` with a 6px backdrop blur behind project dialogs; the certificate lightbox keeps `rgba(20, 21, 23, 0.78)`.
 
@@ -81,7 +81,7 @@ Load via Google Fonts (with system fallbacks):
    - **Name format:** the full name is `Kittiphat Duangmanee`. With the nickname it is always `Kittiphat Duangmanee (Mark)`, never a quoted nickname between the given and family name.
    - **Copy punctuation:** no em dash or en dash in site copy (`npm run verify:data` enforces it). Use a comma, a colon, a period, or the word `to` in date ranges.
 3. **Projects (section 4):** a plain `h2` `Projects` with one line under it, then the two project showcase cards (`mt-14 lg:mt-20`, `gap-20 lg:gap-28` between them). No eyebrow, no index rail, no jump pills.
-4. **Certifications (3D Coverflow Carousel):** Full-width centered showcase displaying the 4 certificates (`AWS`, `depa`, `ARIT`, `Certiport`).
+4. **Certifications (3D Circular Gallery):** Full-width centered ring displaying the 4 certificates (`AWS`, `depa`, `ARIT`, `Certiport`).
 5. **Footer / Contact:** Clean colophon with build stack note, email copy button, and external profiles.
 
 ---
@@ -91,8 +91,8 @@ Load via Google Fonts (with system fallbacks):
 Two finished projects, the Solar String Monitoring Alarm System and OrderDi, from `src/data/projects.ts`. Each is shown through its real screens. A screen is a capture of the live product or a frame exported from its design file, never a hand-coded mockup.
 
 ### Showcase Card (`ProjectShowcaseCard.tsx`)
-- **Grid:** `lg:grid-cols-12 lg:gap-12`. Screens in `lg:col-span-7`, summary in `lg:col-span-5 lg:pt-2`. Below `lg` the two stack, screens first.
-- **Summary column, top to bottom:**
+- **Layout:** the screen ring across the full width, then `mt-8 lg:mt-10` a `lg:grid-cols-12 lg:gap-12` row: title, subtitle and role badge in `lg:col-span-5`; summary, tech badges, actions and note in `lg:col-span-7 lg:pt-1`. Below `lg` everything stacks, ring first.
+- **Summary, top to bottom:**
   - Title `h3` (Project Title scale), optional subtitle at Lede size in Secondary Ink.
   - Role badge: one rounded-lg chip (`border-hairline bg-surface text-[13px]`), its parts joined by a middot, for example `SCG Cleanergy · Application Design Intern` or `Full-stack web application · Live in production`.
   - Summary: at most three plain sentences, Secondary Ink, `max-w-measure`.
@@ -101,15 +101,17 @@ Two finished projects, the Solar String Monitoring Alarm System and OrderDi, fro
   - Secondary: `Visit live app` (outlined pill, new tab) for OrderDi; a muted lock note for the solar system (`Internal enterprise system. Screens are shown with synthetic data.`).
 - **Entrance:** `whileInView` from `{ opacity: 0, y: 16 }` to `{ opacity: 1, y: 0 }`, `viewport={{ once: true, amount: 0.2 }}`, `0.5s` on the site ease-out. One entrance per card, no stagger inside it.
 
-### Screen Carousel (`ProjectUiCarousel.tsx`)
-- **Window frame:** `rounded-xl border border-hairline bg-surface shadow-window overflow-hidden`.
-  - Chrome row `h-11 bg-well border-b`: three `10px` dots in `#C5C0B8`, the current screen title centred (`13px`, Secondary Ink), and a zoom button on the right.
-  - Stage at the card ratio (`16:10`, from the image's own size), image `object-cover object-top`.
-  - Caption under the frame (`text-small`, Secondary Ink, `min-h-11` so a change of caption length does not shift the controls).
+### Screen Ring (`ProjectUiCarousel.tsx` on `primitives/CircularGallery.tsx`)
+- **Ring:** the project's real screens stand on a 3D ring seen from outside, `40deg` apart. The front card faces the reader at its natural size (`z: 0`); its neighbours turn `±40deg` away at `0.85` opacity; further cards fade linearly to `0` at half the set's size, where a card changes sides unseen. Each card is posed by `ringPose()` in `src/styles/tokens.ts`: `x = R sin a`, `z = R (cos a - 1)`, `rotateY = a`, with the radius `R = 1.06 * (w / 2) * (1 + cos 40deg) / sin 40deg` (about `1.46w`, so neighbours never overlap) and a stage perspective of `3w`. There is no shared 3D context: the stage perspective and each card's zIndex decide which card is in front.
+- **Size:** card width `w` is `70%` of the stage below a `640px` stage and `50%` from there, at most `640px`. Below `lg` the stage runs to the screen edges (`-mx-5 sm:-mx-8`) and clips sideways (`overflow-x-clip`), so the side cards reach the edge and the page never scrolls sideways. The stage is the card height plus `28px` above and below.
+- **Card:** a small window, `rounded-xl border border-hairline bg-surface shadow-window overflow-hidden`: a `36px` chrome row (`bg-well`, three `8px` dots in `#C5C0B8`, the screen title at `12px` in Secondary Ink), then the card image at its own ratio (`16:10`, `object-cover object-top`). Clicking the front card opens the zoom; clicking a side card turns it to the front. Cards beyond the neighbours are `inert` and hidden from assistive technology.
+- **Caption and controls,** centred under the ring in `max-w-2xl`: the caption (`text-small`, Secondary Ink, `min-h-11` so a change of caption length does not shift the controls), then one pill per screen (`6px` tall; inactive `8px` wide, active `36px` with the progress fill inside) and `44px` round buttons for zoom, pause or play, previous and next.
+- **Turning:** the ring position is one motion value (in cards, never wrapped), so turning never re-renders React; only a change of front card does. A step turns the ring on an overdamped spring (`stiffness: 260, damping: 34, mass: 0.9`) the shortest way round.
 - **Autoplay:** one screen every `4.5s`. The timer is a single motion value advanced from `useAnimationFrame` (frame gaps capped at `100ms`) and bound to the active pill's `scaleX`, so a tick never re-renders React. It holds on mouse hover, keyboard focus inside the carousel, drag, the zoom view, the detail modal, while less than half the carousel is on screen, and while the visitor has pressed pause. Under reduced motion it never starts.
-- **Change of slide:** `AnimatePresence` keyed by screen, with the direction as `custom`. The new screen enters from `x: ±28px` and the old one leaves to `∓28px` on a spring without overshoot (`stiffness: 320, damping: 36, mass: 0.9`), while both cross-fade over `220ms` on the site ease-out. Under reduced motion: cross-fade only. The next screen is preloaded.
-- **Controls:** one pill per screen (`6px` tall; inactive `8px` wide, active `36px` with the progress fill inside), pause or play, previous, next (`44px` round buttons). `drag="x"` with `touch-action: pan-y`: release past `50px` or faster than `400px/s` changes the screen. `ArrowLeft` and `ArrowRight` act on the focused carousel only and are marked handled, so the certificate carousel ignores them.
-- **Zoom (`ScreenshotLightbox.tsx`):** a click on the screen or the zoom button opens the full frame (up to `2880px` wide) in a dialog with its title, `n / total`, previous and next, the caption, and Escape to close.
+- **Drag:** the ring follows the pointer, one card per `0.6` card widths (`touch-action: pan-y`, so the page still scrolls vertically), and settles on the nearest card. Release velocity adds at most one card (`0.15s` of projection), and a release past `50px` or faster than `400px/s` always moves one card. The click that ends a drag is ignored.
+- **Reduced motion:** no autoplay, no travel and no finger follow: the ring jumps to the new card and the stage fades in over `220ms` on the site ease-out.
+- **Keys:** `ArrowLeft` and `ArrowRight` act on the focused ring only and are marked handled, so the certificate ring ignores them.
+- **Zoom (`ScreenshotLightbox.tsx`):** a click on the front card or the zoom button opens the full frame (up to `2880px` wide) in a dialog with its title, `n / total`, previous and next, the caption, and Escape to close.
 
 ### Detail Modal (`ProjectDetailModal.tsx`)
 - Built on `primitives/ModalDialog.tsx`: the native `<dialog>` opened with `showModal()` (focus trap, inert page, focus returned to the trigger), `role="dialog"`, `aria-modal="true"`, `aria-labelledby` the title, scroll lock, and Escape or a scrim click to close. The dialog stays in the top layer until its exit animation ends.
@@ -130,41 +132,34 @@ Two finished projects, the Solar String Monitoring Alarm System and OrderDi, fro
 
 ## 5. Component Spec: Page Motion
 
-- **Global Wrapper:** Wrap the root application in `<MotionConfig reducedMotion="user">`. Motion values driven by hand (pointer tilt, the carousel timer, flow dots) also read `useMotionPreference` and hold still.
+- **Global Wrapper:** Wrap the root application in `<MotionConfig reducedMotion="user">`. Motion values driven by hand (pointer tilt, the ring position and its autoplay timer, flow dots) also read `useMotionPreference` and hold still.
 - **One easing curve:** `cubic-bezier(0.22, 1, 0.36, 1)` (`--ease-editorial`) for CSS transitions and timed Framer transitions. Press feedback is `scale(0.97)` over `150ms` on every pill and round button.
 - **Exits are shorter than entrances:** modal `0.45s` in, `0.18s` out; sheet `0.45s` in, `0.25s` out.
 - **No scroll parallax, no sticky index:** the page scrolls as written. The project cards rise into view once.
 
 ---
 
-## 6. Component Spec: 3D Certificate Coverflow Carousel
+## 6. Component Spec: 3D Certificate Circular Gallery
 
-### Stage & Card Geometry
-- **Stage Container:** `relative w-full h-[360px] sm:h-[430px] flex items-center justify-center overflow-x-clip` with `style={{ perspective: 1400 }}`.
-- **Card Dimensions:** `w-[280px] sm:w-[380px] md:w-[440px] aspect-[1.414/1]` (standard A4 landscape certificate ratio), `rounded-xl bg-white border border-[#E4E2DD] shadow-xl overflow-hidden`.
+### Ring & Card Geometry
+- The same ring as the project screens (`primitives/CircularGallery.tsx`, section 4): `40deg` apart, neighbours at `0.85` opacity, the stage running to the screen edges below `lg`, card width `70%` / `50%` of the stage.
+- **Card:** A4 landscape (`1.414:1`), at most `440px` wide, `rounded-xl bg-white border border-[#E4E2DD] shadow-xl overflow-hidden`, the scan `object-contain`.
+- The ring loops in both directions and does not autoplay: these are documents to read.
 
-### Position States (`offset = index - activeIndex`)
-Animate each certificate card with `transition={{ type: "spring", stiffness: 280, damping: 28 }}`:
-- **`offset === 0` (Center Active Card):**
-  - `x: "0%"`, `scale: 1`, `rotateY: 0`, `zIndex: 30`, `opacity: 1`
-  - Enables interactive 3D pointer tilt (`±6deg`) on desktop and opens the Lightbox modal on click.
-- **`offset === -1` (Left Adjacent Card):**
-  - `x: "-56%"`, `scale: 0.85`, `rotateY: 22`, `zIndex: 20`, `opacity: 0.72`
-  - Clicking brings this card to center (`setActiveIndex(index)`).
-- **`offset === 1` (Right Adjacent Card):**
-  - `x: "56%"`, `scale: 0.85`, `rotateY: -22`, `zIndex: 20`, `opacity: 0.72`
-  - Clicking brings this card to center (`setActiveIndex(index)`).
-- **`Math.abs(offset) >= 2` (Parked Cards):**
-  - `x: offset < 0 ? "-92%" : "92%"`, `scale: 0.7`, `rotateY: offset < 0 ? 32 : -32`, `zIndex: 10`, `opacity: 0`, `pointerEvents: "none"`
+### Cards
+- **Front card:** interactive 3D pointer tilt (`±6deg`, spring `stiffness: 260, damping: 24, mass: 0.6`, own perspective `1400px`) on a fine pointer only, never on `(pointer: coarse)` or under reduced motion. A click opens the Lightbox modal.
+- **Neighbours (`offset === ±1`):** a click turns the card to the front.
+- **Further cards:** faded out, `inert`.
 
 ### Controls, Gestures & Lightbox
-- **Touch / Pointer Drag:** Support horizontal swipe (`drag="x"`, `dragConstraints={{ left: 0, right: 0 }}`); release with `offset.x < -50` advances next, `offset.x > 50` goes previous.
-- **Navigation Bar:** Centered controls beneath the stage with Previous button, pagination dots (`1 / 4`), active certificate title/issuer caption, and Next button.
-- **Keyboard Isolation:** Bind `ArrowLeft` and `ArrowRight` listeners **only** when the carousel section is focused or intersecting the viewport (`isCarouselInView === true`) and the lightbox is closed.
+- **Drag / Swipe:** the ring follows the pointer and settles as described in section 4.
+- **Navigation Bar:** the hint line (`Swipe, drag, or use the arrows`) above the ring; under it Previous (never disabled), the active certificate's title and `issuer · date` (`aria-live="polite"`), and Next (`48px` round buttons); then pagination dots with `n / 4`, and the `Inspect certificate` button.
+- **Keyboard Isolation:** Bind `ArrowLeft` and `ArrowRight` listeners **only** when the carousel section is focused or at least half in view, and the lightbox is closed. Keys already handled by a project ring are ignored.
 - **Lightbox Modal:**
-  - Triggered by clicking the active center certificate card (or "Inspect Certificate" button).
+  - Triggered by clicking the front certificate card (or "Inspect certificate").
   - Renders high-resolution `.webp` image inside a centered modal (`max-w-4xl`), issuer/date metadata, and a direct **"Open / Download PDF"** link pointing to `/certificates/<filename>.pdf`.
   - Closes on `Escape` key, close button, or backdrop click.
+
 ---
 
 ## 7. Component Spec: Interactive Embossed Background

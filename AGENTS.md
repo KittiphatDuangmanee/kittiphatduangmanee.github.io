@@ -49,26 +49,27 @@ Before building UI components, ensure raw assets from `design/assets/` are proce
 Use **Framer Motion** exclusively for animations. Do not install heavy external scroll/3D libraries (e.g., Three.js, GSAP, Locomotive Scroll) unless explicitly requested.
 
 ### A. Project Showcase Cards (`ProjectShowcaseCard.tsx`)
-- **Layout:** `lg:grid-cols-12`, screens in `lg:col-span-7`, summary in `lg:col-span-5`; stacked below `lg`. The section header is a plain `h2` "Projects" with one line under it. No eyebrow, no index rail, no book framing.
-- **Summary column:** title (`h3`), role badge (parts joined with a middot), a summary of at most three sentences, `TechBadge` list, the primary button `View project details and architecture` (`active:scale-[0.97]`), then `Visit live app` for OrderDi or a lock note for the solar system.
+- **Layout:** the screen ring across the full width, then a `lg:grid-cols-12` row: title, subtitle and role badge in `lg:col-span-5`, the rest of the summary in `lg:col-span-7`; stacked below `lg`. The section header is a plain `h2` "Projects" with one line under it. No eyebrow, no index rail, no book framing.
+- **Summary:** title (`h3`), role badge (parts joined with a middot), a summary of at most three sentences, `TechBadge` list, the primary button `View project details and architecture` (`active:scale-[0.97]`), then `Visit live app` for OrderDi or a lock note for the solar system.
 - **Entrance:** one `whileInView` fade with a 16px rise (`viewport={{ once: true, amount: 0.2 }}`, 0.5s on the site ease-out).
 
-### B. Screen Carousel (`ProjectUiCarousel.tsx`) and Zoom (`ScreenshotLightbox.tsx`)
-- **Frame:** `rounded-xl border border-hairline bg-surface shadow-window overflow-hidden`, a quiet chrome row (three dots, the screen title, a zoom button), a stage at the card ratio (16:10), and the caption underneath.
-- **Autoplay:** every `4.5s`, timed by one motion value written from `useAnimationFrame` and bound to the active pill's `scaleX`, so ticks never re-render React. Pauses on mouse hover, keyboard focus, drag, zoom, the detail modal, off screen, and by the pause button. No autoplay under reduced motion.
-- **Change of slide:** `AnimatePresence` with direction: a 28px slide on a spring without overshoot (`stiffness: 320, damping: 36, mass: 0.9`) and a 220ms opacity fade. Reduced motion: fade only.
-- **Controls:** previous and next buttons, one pill per screen, `drag="x"` with `touch-action: pan-y` (changes on 50px or a 400px/s flick), arrow keys on the focused carousel, and click or the zoom button for the full-resolution lightbox.
+### B. Screen Ring (`ProjectUiCarousel.tsx` on `primitives/CircularGallery.tsx`) and Zoom (`ScreenshotLightbox.tsx`)
+- **Ring:** the real screens stand on a 3D ring seen from outside, `40deg` apart, posed by `ringPose()` in `src/styles/tokens.ts` from one position motion value, so turning never re-renders React. The front card shows at its natural size, the neighbours turn `±40deg` at `0.85` opacity, and the rest fade out before they change sides. Card width is `70%` of the stage below a `640px` stage and `50%` from there, at most `640px`; below `lg` the stage runs to the screen edges and clips sideways (`overflow-x-clip`).
+- **Card:** a small window: `rounded-xl border border-hairline bg-surface shadow-window overflow-hidden`, a `36px` chrome row (three dots, the screen title), and the 16:10 card image. Clicking the front card opens the zoom; clicking a side card turns it to the front. Cards beyond the neighbours are `inert`.
+- **Autoplay:** every `4.5s`, timed by one motion value written from `useAnimationFrame` and bound to the active pill's `scaleX`, so ticks never re-render React. The ring turns on an overdamped spring (`stiffness: 260, damping: 34, mass: 0.9`). Pauses on mouse hover, keyboard focus, drag, zoom, the detail modal, off screen, and by the pause button. No autoplay under reduced motion.
+- **Controls:** under the ring, the caption, one pill per screen, and round buttons for zoom, pause or play, previous and next. Drag turns the ring under the pointer (`touch-action: pan-y`) and settles on the nearest card, with at most one card of momentum; a release past `50px` or faster than `400px/s` always moves one. Arrow keys act on the focused ring.
+- **Reduced motion:** no autoplay and no travel: the ring jumps to the card and the stage fades in over `220ms`.
 
 ### C. Detail Modal (`ProjectDetailModal.tsx`) and Architecture Diagram (`DrawioArchitectureDiagram.tsx`)
 - **Modal:** `primitives/ModalDialog.tsx` on a native `<dialog>`: focus trap, inert page, scroll lock, Escape and scrim click, focus back on the trigger. `max-w-5xl` centred panel from `md` (spring entrance `duration: 0.45, bounce: 0` from `scale: 0.97, y: 12`; 180ms exit); a bottom sheet on phones on the drawer curve. Blurred scrim.
 - **Content:** fixed header (title, role and period, tech badges from `md`), then overview and problem, a check-marked list of contributions, and the architecture diagram.
 - **Diagram:** a light Draw.io-style canvas (`diagram-grid`: `#F8FAFC` with `#E2E8F0` lines, `#CBD5E1` border), a toolbar of flow filters and a reset, white icon node cards (`border-2 rounded-xl`, 28px icon, bold title, mono tech line), orthogonal connectors with rounded corners, arrowheads and label chips, and dots that travel along live connectors. Hover previews a node, click selects it: its connectors and neighbours stay lit, the rest dims, and the inspector shows technology, input, output and the key decision. Below a 920px stage the grid is transposed to read top to bottom, so it never scrolls sideways.
 
-### D. 3D Certificate Coverflow Carousel
-- Render `src/data/certificates.ts` in an interactive **3D Perspective Coverflow Carousel**:
-  - **Center Card (`offset === 0`):** `scale: 1`, `rotateY: 0deg`, `zIndex: 20`, full opacity, with active 3D pointer tilt on desktop.
-  - **Adjacent Cards (`offset === ±1`):** `scale: 0.86`, angled inward (`rotateY: offset * -20deg`), shifted horizontally with reduced opacity (`0.7`), clickable to bring into center focus.
-  - **Controls & Lightbox:** Support touch swipe/drag (`drag="x"`), prev/next buttons, scoped keyboard arrow navigation (active only when the carousel section is focused/in view so it does not conflict with project navigation), and a click-to-open Lightbox modal displaying the high-res `.webp` plus a PDF download/view button.
+### D. 3D Certificate Circular Gallery
+- Render `src/data/certificates.ts` on the same ring as the project screens (`primitives/CircularGallery.tsx`), with A4 landscape cards (`1.414:1`, at most `440px` wide). The ring loops in both directions and does not autoplay: these are documents to read.
+  - **Front card:** full opacity, with 3D pointer tilt (`±6deg`) on a fine pointer only; a click opens the lightbox.
+  - **Neighbours (`±1`):** turned `±40deg` at `0.85` opacity; a click turns the card to the front.
+  - **Controls & Lightbox:** drag or swipe, previous and next buttons (never disabled), dots with `n / 4`, scoped keyboard arrow navigation (active only when the certificate section is focused or in view, so it does not conflict with the project rings), and a lightbox showing the high-res `.webp` plus a PDF view/download button.
 
 ### E. Hero & Interactive Embossed Background
 - **Hero Content:** `h1` name, a sans-serif role line (`Full-Stack Developer`), a two-sentence bio, one primary CTA, three metadata columns (Education, Experience, Location), the Core Stack, and the portrait card with a two-line caption. No status or availability pill, no `FIG.` / `Fig.` labels, and no registration marks or crosshairs.
